@@ -5,8 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>TzuSpark — Innovating Today. Connecting Tomorrow.</title>
   <meta name="description" content="TzuSpark is a personally created line of all-natural sparkling sodas, with OEM services and a clear look at how every can is made.">
-  <meta name="theme-color" content="#F8D5DC">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%236B2A36'/%3E%3Cpath d='M16 5.5l1.8 6.2H24l-5 3.8 1.9 6.3L16 18.2 11.1 21.8 13 15.5 8 11.7h6.2z' fill='%23F2C14B'/%3E%3C/svg%3E">
+  <meta name="theme-color" content="#6B2A36">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="TzuSpark">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="icon" href="icons/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Calistoga&family=Cormorant+Garamond:wght@600;700&family=Fraunces:ital,opsz,wght@1,9..144,560;1,9..144,640&family=Noto+Sans+TC:wght@500;700&family=Nunito:wght@400;600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
@@ -96,6 +102,8 @@
       min-height: 36px;
     }
     .notice-text { margin: 0; }
+    .notice-actions { display: flex; align-items: center; gap: 8px; flex: none; }
+    .install-hint { margin: 0; font-size: 12px; font-weight: 700; }
     .notice-collapse-btn {
       appearance: none;
       border: 1px solid #e7b4c0;
@@ -940,10 +948,17 @@
           <span class="zh">TzuSpark 全天然氣泡汽水。</span>
           <span class="en">TzuSpark all-natural sparkling soda.</span>
         </p>
-        <button type="button" class="notice-collapse-btn" data-collapse-menu aria-controls="site-main-nav" aria-expanded="true">
-          <span class="zh" data-collapse-label-zh>隱藏主選單</span>
-          <span class="en" data-collapse-label-en>Collapse this menu</span>
-        </button>
+        <div class="notice-actions">
+          <p class="install-hint" id="install-hint" hidden></p>
+          <button type="button" class="notice-collapse-btn" id="install-app">
+            <span class="zh">安裝 App</span>
+            <span class="en">Install app</span>
+          </button>
+          <button type="button" class="notice-collapse-btn" data-collapse-menu aria-controls="site-main-nav" aria-expanded="true">
+            <span class="zh" data-collapse-label-zh>隱藏主選單</span>
+            <span class="en" data-collapse-label-en>Collapse this menu</span>
+          </button>
+        </div>
       </div>
     </div>
     <div class="branding-header">
@@ -1555,6 +1570,42 @@
       form.hidden = false;
       form.querySelector("input").focus();
     });
+
+    const installBtn = document.getElementById("install-app");
+    const installHint = document.getElementById("install-hint");
+    let deferredPrompt = null;
+    const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+    function showInstallHint() {
+      const isZh = document.documentElement.getAttribute("data-locale") === "zh";
+      installHint.textContent = isZh
+        ? "用瀏覽器選單的「安裝」或「加入主畫面」。裝好後從主畫面開啟，就不會再看到網址列。"
+        : "Use the browser menu: Install or Add to Home Screen. Once installed, open it from the home screen and the address bar is gone.";
+      installHint.hidden = false;
+    }
+    if (standalone) {
+      installBtn.querySelector(".zh").textContent = "已是 App";
+      installBtn.querySelector(".en").textContent = "Opened as app";
+      installBtn.disabled = true;
+    }
+    window.addEventListener("beforeinstallprompt", (event) => {
+      event.preventDefault();
+      deferredPrompt = event;
+    });
+    installBtn.addEventListener("click", async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        return;
+      }
+      showInstallHint();
+    });
+    window.addEventListener("appinstalled", () => {
+      installHint.hidden = true;
+    });
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js");
+    }
   </script>
 </body>
 </html>
