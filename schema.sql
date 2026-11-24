@@ -6,7 +6,7 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   email text not null default '',
   display_name text not null default '',
-  role text not null default 'visitor' check (role in ('visitor', 'admin', 'super_admin')),
+  role text not null default 'visitor' check (role in ('visitor', 'pending', 'rejected', 'admin', 'super_admin')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -69,6 +69,19 @@ create index if not exists news_created_at_idx on public.news (created_at desc);
 create index if not exists messages_user_idx on public.messages (user_id, created_at desc);
 create index if not exists site_events_created_idx on public.site_events (created_at desc);
 
+create table if not exists public.login_logs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles (id) on delete cascade,
+  email text not null default '',
+  display_name text not null default '',
+  role text not null default '',
+  created_at timestamptz not null default now()
+);
+
+create index if not exists login_logs_created_idx on public.login_logs (created_at desc);
+alter table public.login_logs enable row level security;
+grant insert, select on public.login_logs to authenticated;
+
 alter table public.profiles enable row level security;
 alter table public.site_content enable row level security;
 alter table public.news enable row level security;
@@ -98,7 +111,7 @@ begin
   if not exists (select 1 from public.profiles where role = 'super_admin') then
     assigned := 'super_admin';
   else
-    assigned := 'visitor';
+    assigned := 'pending';
   end if;
   insert into public.profiles (id, email, display_name, role)
   values (
@@ -142,6 +155,16 @@ revoke all on function private.tz_role() from public, anon;
 revoke all on function private.handle_new_user() from public, anon, authenticated;
 revoke all on function private.protect_last_super_admin() from public, anon, authenticated;
 grant execute on function private.tz_role() to authenticated;
+
+drop policy if exists "members record their own login" on public.login_logs;
+create policy "members record their own login" on public.login_logs
+  for insert to authenticated
+  with check (user_id = (select auth.uid()));
+
+drop policy if exists "staff reads login logs" on public.login_logs;
+create policy "staff reads login logs" on public.login_logs
+  for select to authenticated
+  using ((select private.tz_role()) in ('admin', 'super_admin'));
 
 grant select on public.site_content to anon, authenticated;
 grant select on public.news to anon, authenticated;
@@ -205,7 +228,7 @@ drop policy if exists "super admin updates profiles" on public.profiles;
 create policy "super admin updates profiles" on public.profiles
   for update to authenticated
   using ((select private.tz_role()) = 'super_admin')
-  with check ((select private.tz_role()) = 'super_admin' and role in ('visitor', 'admin', 'super_admin'));
+  with check ((select private.tz_role()) = 'super_admin' and role in ('visitor', 'pending', 'rejected', 'admin', 'super_admin'));
 
 drop policy if exists "members insert own messages" on public.messages;
 create policy "members insert own messages" on public.messages

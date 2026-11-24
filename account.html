@@ -36,7 +36,8 @@
     .btn-fill { background: var(--plum); color: #fff; }
     .btn-line { border-color: var(--wine); }
     .alert { border-radius: 12px; padding: 12px 14px; margin: 0 0 14px; background: #fff4e8; }
-    .alert.ok { background: #eef8e8; }
+    .alert.ok { background: #e7f6df; color: #1f6b32; border: 1px solid #7dca6a; text-align: center; }
+    .submit-row { display: flex; justify-content: center; margin: 18px 0 0; }
     .hint { color: var(--muted); margin: 0 0 12px; line-height: 1.5; }
     .grid { display: grid; gap: 14px; }
     .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 14px; }
@@ -58,9 +59,24 @@
     .item h3 { margin: 0 0 4px; }
     .role { display: inline-block; background: var(--blush); color: var(--wine); border-radius: 999px; padding: 4px 10px; font-weight: 700; }
     .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .office-layout { display: flex; gap: 18px; align-items: flex-start; width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
+    .office-main { flex: 1; min-width: 0; }
+    .side { width: 210px; flex: none; background: #f6efe9; border-radius: 18px; padding: 8px; }
+    .side-link { display: flex; align-items: center; gap: 10px; width: 100%; margin: 4px 0; padding: 12px 14px; border: 0; border-radius: 14px; background: transparent; color: #6a564e; font: inherit; font-weight: 700; cursor: pointer; text-align: left; }
+    .side-link svg { width: 18px; height: 18px; flex: none; }
+    .side-link.is-on { background: #fff; color: var(--wine); box-shadow: 0 8px 18px rgba(107, 42, 54, .08); }
+    .account-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; background: #fff; border: 1px solid var(--line); border-left: 4px solid var(--gold); border-radius: 16px; padding: 14px 16px; margin: 0 0 12px; }
+    .account-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); }
+    th { color: var(--wine); font-size: 14px; }
     html[data-locale="en"] .zh { display: none; }
     html[data-locale="zh"] .en { display: none; }
-    @media (max-width: 800px) { .stats, .charts, .two, .bar { grid-template-columns: 1fr; } }
+    @media (max-width: 800px) {
+      .stats, .charts, .two, .bar, .account-row { grid-template-columns: 1fr; }
+      .office-layout { display: block; width: min(1040px, calc(100% - 32px)); }
+      .side { width: auto; margin-bottom: 14px; }
+    }
   </style>
 </head>
 <body>
@@ -107,6 +123,8 @@
               <input id="reg-password2" name="password2" type="password" minlength="6" required>
               <button class="eye" type="button" data-eye="reg-password2" aria-label="Show password">◉</button>
             </div>
+            <p class="submit-row"><button class="btn btn-fill" type="submit"><span class="zh">送出</span><span class="en">Submit</span></button></p>
+            <div class="alert" id="register-alert" hidden></div>
           </form>
         </div>
         <div id="view-forgot" hidden>
@@ -115,6 +133,8 @@
           <form id="form-forgot">
             <label for="forgot-email"><span class="zh">電子郵件</span><span class="en">Email</span></label>
             <input id="forgot-email" name="email" type="email" required>
+            <p class="submit-row"><button class="btn btn-fill" type="submit"><span class="zh">送出</span><span class="en">Submit</span></button></p>
+            <div class="alert" id="forgot-alert" hidden></div>
           </form>
         </div>
         <div id="view-reset" hidden>
@@ -135,7 +155,28 @@
       </div>
     </section>
 
-    <section class="wrap" id="office" hidden>
+    <section class="office-layout" id="office" hidden>
+      <aside class="side" id="side" hidden>
+        <nav aria-label="Back office">
+          <button type="button" class="side-link is-on" data-section="news">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 5h11l3 3v11H5z"/><path d="M8 12h8M8 16h6"/></svg>
+            <span><span class="zh">公告管理</span><span class="en">Announcements</span></span>
+          </button>
+          <button type="button" class="side-link" data-section="users" id="side-users">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM16 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/><path d="M3.5 19c.6-2.4 2.4-3.5 4.5-3.5s3.9 1.1 4.5 3.5M14 15.6c1.4-.4 2.8-.2 4 .8.8.7 1.3 1.6 1.5 2.6"/></svg>
+            <span><span class="zh">管理員審核</span><span class="en">Admin approval</span></span>
+          </button>
+          <button type="button" class="side-link" data-section="logins">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 7h12M8 12h12M8 17h12"/><path d="M4 7h.01M4 12h.01M4 17h.01"/></svg>
+            <span><span class="zh">登入總覽</span><span class="en">Login overview</span></span>
+          </button>
+          <button type="button" class="side-link" data-section="data">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>
+            <span><span class="zh">資料庫</span><span class="en">Database</span></span>
+          </button>
+        </nav>
+      </aside>
+      <div class="office-main">
       <p class="role" id="role-badge"></p>
       <p class="hint" id="role-note"></p>
       <div id="office-alert" class="alert" hidden></div>
@@ -154,12 +195,7 @@
         <form class="card" id="form-visitor" style="margin-top:14px">
           <h2><span class="zh">寫給官方</span><span class="en">Write to TzuSpark</span></h2>
           <label><span class="zh">類型</span><span class="en">Type</span>
-            <select name="kind">
-              <option value="message">傳送訊息 / Message</option>
-              <option value="question">詢問問題 / Question</option>
-              <option value="quote">索取報價單 / Request a quote</option>
-              <option value="product_info">索取產品詳細資料 / Product details</option>
-            </select>
+            <select name="kind" id="kind-select"></select>
           </label>
           <div class="two">
             <label><span class="zh">姓名</span><span class="en">Name</span><input name="name" required></label>
@@ -184,14 +220,41 @@
         <p><button class="btn btn-fill" type="submit"><span class="zh">發布到首頁</span><span class="en">Publish</span></button></p>
       </form>
 
+      <div id="panel-pending" class="card" hidden>
+        <h2><span class="zh">待審核</span><span class="en">Waiting for approval</span></h2>
+        <p class="hint" id="pending-copy"></p>
+      </div>
+
+      <div id="panel-users" hidden>
+        <p class="hint" id="users-count"></p>
+        <div id="users-list"></div>
+      </div>
+
+      <div id="panel-logins" hidden>
+        <p class="hint" id="login-count"></p>
+        <div class="panel">
+          <table>
+            <thead>
+              <tr>
+                <th><span class="zh">名稱</span><span class="en">Name</span></th>
+                <th><span class="zh">帳號</span><span class="en">Account</span></th>
+                <th><span class="zh">時間</span><span class="en">Time</span></th>
+                <th><span class="zh">身分</span><span class="en">Role</span></th>
+              </tr>
+            </thead>
+            <tbody id="login-body"></tbody>
+          </table>
+        </div>
+      </div>
+
       <div id="panel-super" hidden>
         <form class="card" id="form-content" style="margin-top:14px">
           <h2><span class="zh">修改全站文字</span><span class="en">Edit site text</span></h2>
           <div id="content-fields"></div>
           <p><button class="btn btn-fill" type="submit"><span class="zh">儲存並同步到首頁</span><span class="en">Save</span></button></p>
         </form>
-        <section class="panel" style="margin-top:14px"><h2><span class="zh">管理員名單</span><span class="en">People and roles</span></h2><div id="people"></div></section>
         <section class="panel" style="margin-top:14px"><h2><span class="zh">訪客來信</span><span class="en">Visitor inbox</span></h2><div id="inbox"></div></section>
+      </div>
       </div>
     </section>
   </main>
@@ -207,9 +270,31 @@
       document.documentElement.setAttribute("data-locale", zh ? "zh" : "en");
       localStorage.setItem("tzuspark-locale", zh ? "zh" : "en");
       langButton.textContent = zh ? "EN" : "中文";
+      document.dispatchEvent(new CustomEvent("tz-locale"));
     }
-    setLocale(localStorage.getItem("tzuspark-locale") || "zh");
+    setLocale(localStorage.getItem("tzuspark-locale") || "en");
     langButton.addEventListener("click", () => setLocale(isZh() ? "en" : "zh"));
+    function syncKindOptions() {
+      const select = document.getElementById("kind-select");
+      if (!select) return;
+      const current = select.value || "message";
+      const kinds = [
+        ["message", "傳送訊息", "Message"],
+        ["question", "詢問問題", "Question"],
+        ["quote", "索取報價單", "Request a quote"],
+        ["product_info", "索取產品詳細資料", "Product details"]
+      ];
+      select.replaceChildren();
+      kinds.forEach(([value, zh, en]) => {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = t(zh, en);
+        select.append(option);
+      });
+      select.value = current;
+    }
+    syncKindOptions();
+    document.addEventListener("tz-locale", syncKindOptions);
     document.querySelectorAll("[data-eye]").forEach((button) => {
       button.addEventListener("click", () => {
         const input = document.getElementById(button.getAttribute("data-eye"));
@@ -243,10 +328,20 @@
     const client = window.tzCreateClient();
     const authAlert = document.getElementById("auth-alert");
     const officeAlert = document.getElementById("office-alert");
+    const alertTimers = new WeakMap();
     function showAlert(box, message, ok) {
+      const previous = alertTimers.get(box);
+      if (previous) window.clearTimeout(previous);
       box.hidden = !message;
       box.textContent = message || "";
-      box.classList.toggle("ok", Boolean(ok));
+      box.classList.toggle("ok", Boolean(ok) && Boolean(message));
+      if (message && ok) {
+        alertTimers.set(box, window.setTimeout(() => {
+          box.hidden = true;
+          box.textContent = "";
+          box.classList.remove("ok");
+        }, 6000));
+      }
     }
     if (!client) {
       showAlert(authAlert, t("還沒讀到 Supabase 連線資訊。", "The Supabase connection is missing."), false);
@@ -273,8 +368,9 @@
       document.getElementById("form-up").addEventListener("submit", async (event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
+        const registerAlert = document.getElementById("register-alert");
         if (data.get("password") !== data.get("password2")) {
-          showAlert(authAlert, t("兩次密碼不一致。", "The passwords do not match."), false);
+          showAlert(registerAlert, t("兩次密碼不一致。", "The passwords do not match."), false);
           return;
         }
         const { data: created, error } = await client.auth.signUp({
@@ -282,14 +378,15 @@
           password: String(data.get("password")),
           options: { data: { display_name: String(data.get("name")) }, emailRedirectTo: location.origin + location.pathname }
         });
-        if (error) showAlert(authAlert, error.message, false);
-        else if (!created.session) showAlert(authAlert, t("請到信箱點確認信，再回來登入。", "Check your email, then sign in."), true);
+        if (error) showAlert(registerAlert, error.message, false);
+        else if (!created.session) showAlert(registerAlert, t("申請已送出，請等待管理員審核。", "Your application has been sent. Please wait for an admin to review it."), true);
       });
       document.getElementById("form-forgot").addEventListener("submit", async (event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
+        const forgotAlert = document.getElementById("forgot-alert");
         const { error } = await client.auth.resetPasswordForEmail(String(data.get("email")), { redirectTo: location.origin + location.pathname });
-        showAlert(authAlert, error ? error.message : t("重設信已寄出。", "Reset email sent."), !error);
+        showAlert(forgotAlert, error ? error.message : t("申請已送出，請至該信箱確認。", "Your request has been sent. Please check that inbox."), !error);
       });
       document.getElementById("form-reset").addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -307,11 +404,32 @@
       function roleLabel(role) {
         if (role === "super_admin") return t("超級管理員", "Super admin");
         if (role === "admin") return t("管理員", "Admin");
+        if (role === "pending") return t("待審核", "Pending");
+        if (role === "rejected") return t("已拒絕", "Rejected");
         return t("一般訪客", "Visitor");
       }
+      let section = "news";
+      const sectionTitles = {
+        news: ["公告管理", "Announcements"],
+        users: ["管理員審核", "Admin approval"],
+        logins: ["登入總覽", "Login overview"],
+        data: ["資料庫", "Database"]
+      };
       function setHero(zh, en) {
         document.getElementById("hero-title").innerHTML = '<span class="zh">' + zh + '</span><span class="en">' + en + '</span>';
         document.getElementById("crumb-now").innerHTML = '<span class="zh">' + zh + '</span><span class="en">' + en + '</span>';
+      }
+      function fieldLabel(zh, en) {
+        const p = document.createElement("p");
+        p.className = "muted";
+        const zhSpan = document.createElement("span");
+        zhSpan.className = "zh";
+        zhSpan.textContent = zh;
+        const enSpan = document.createElement("span");
+        enSpan.className = "en";
+        enSpan.textContent = en;
+        p.append(zhSpan, enSpan);
+        return p;
       }
       function emptyNote() {
         const p = document.createElement("p");
@@ -500,6 +618,135 @@
           target.append(item);
         });
       }
+      function showSection(name) {
+        section = name;
+        document.querySelectorAll(".side-link").forEach((button) => {
+          button.classList.toggle("is-on", button.getAttribute("data-section") === name);
+        });
+        document.getElementById("form-news").hidden = name !== "news";
+        document.getElementById("panel-super").hidden = name !== "news" || !profile || profile.role !== "super_admin";
+        document.getElementById("panel-users").hidden = name !== "users";
+        document.getElementById("panel-logins").hidden = name !== "logins";
+        document.getElementById("panel-data").hidden = name !== "data";
+        const title = sectionTitles[name] || sectionTitles.news;
+        setHero(title[0], title[1]);
+        if (name === "data") drawData();
+        if (name === "users") loadUsers();
+        if (name === "logins") loadLogins();
+      }
+      document.querySelectorAll(".side-link").forEach((button) => {
+        button.addEventListener("click", () => showSection(button.getAttribute("data-section")));
+      });
+      function actionButton(role, zh, en, filled) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "btn " + (filled ? "btn-fill" : "btn-line");
+        button.dataset.role = role;
+        const zhSpan = document.createElement("span");
+        zhSpan.className = "zh";
+        zhSpan.textContent = zh;
+        const enSpan = document.createElement("span");
+        enSpan.className = "en";
+        enSpan.textContent = en;
+        button.append(zhSpan, enSpan);
+        return button;
+      }
+      async function loadUsers() {
+        const { data, error } = await client.from("profiles").select("id,email,display_name,role,created_at").order("created_at");
+        const list = document.getElementById("users-list");
+        const count = document.getElementById("users-count");
+        if (error) { showAlert(officeAlert, error.message, false); return; }
+        const rows = data || [];
+        const waiting = rows.filter((row) => row.role === "pending").length;
+        count.textContent = t("共 " + rows.length + " 位，待審核 " + waiting + " 位", rows.length + " accounts, " + waiting + " pending");
+        const order = { pending: 0, rejected: 1, visitor: 2, admin: 3, super_admin: 4 };
+        rows.sort((a, b) => (order[a.role] ?? 9) - (order[b.role] ?? 9));
+        list.replaceChildren();
+        if (!rows.length) { list.append(emptyNote()); return; }
+        rows.forEach((person) => {
+          const row = document.createElement("article");
+          row.className = "account-row";
+          const info = document.createElement("div");
+          const pill = document.createElement("span");
+          pill.className = "role";
+          pill.textContent = roleLabel(person.role);
+          const title = document.createElement("h3");
+          title.textContent = person.display_name || person.email;
+          const mail = document.createElement("p");
+          mail.className = "muted";
+          mail.textContent = person.email;
+          info.append(pill, title, mail);
+          const actions = document.createElement("div");
+          actions.className = "account-actions";
+          const buttons = [];
+          if (person.role === "pending" || person.role === "rejected") {
+            buttons.push(["admin", "核准為管理員", "Approve as admin", true]);
+            buttons.push(["visitor", "設為一般訪客", "Set as visitor", false]);
+            if (person.role === "pending") buttons.push(["rejected", "拒絕", "Reject", false]);
+          } else if (person.role === "visitor") {
+            buttons.push(["admin", "核准為管理員", "Approve as admin", true]);
+          } else if (person.role === "admin") {
+            buttons.push(["visitor", "設為一般訪客", "Set as visitor", false]);
+            buttons.push(["super_admin", "設為超級管理員", "Make super admin", false]);
+          } else if (person.role === "super_admin") {
+            buttons.push(["admin", "核准為管理員", "Approve as admin", false]);
+            buttons.push(["visitor", "設為一般訪客", "Set as visitor", false]);
+          }
+          if (person.id === profile.id) buttons.length = 0;
+          buttons.forEach(([role, zh, en, filled]) => {
+            const button = actionButton(role, zh, en, filled);
+            if (person.id === profile.id && role === person.role) button.disabled = true;
+            button.addEventListener("click", async () => {
+              const { error: updateError } = await client.from("profiles").update({ role }).eq("id", person.id);
+              showAlert(officeAlert, updateError ? updateError.message : t("已更新為", "Updated to ") + roleLabel(role), !updateError);
+              if (!updateError) loadUsers();
+            });
+            actions.append(button);
+          });
+          row.append(info, actions);
+          list.append(row);
+        });
+      }
+      async function loadLogins() {
+        const { data, error } = await client.from("login_logs").select("email,display_name,role,created_at").order("created_at", { ascending: false }).limit(80);
+        const body = document.getElementById("login-body");
+        const count = document.getElementById("login-count");
+        body.replaceChildren();
+        if (error) { showAlert(officeAlert, error.message, false); return; }
+        const rows = data || [];
+        count.textContent = t("最近 " + rows.length + " 次登入", "Latest " + rows.length + " sign-ins");
+        if (!rows.length) {
+          const line = document.createElement("tr");
+          const cell = document.createElement("td");
+          cell.colSpan = 4;
+          cell.textContent = t("尚無登入紀錄。", "No sign-ins yet.");
+          line.append(cell);
+          body.append(line);
+          return;
+        }
+        rows.forEach((row) => {
+          const line = document.createElement("tr");
+          [row.display_name || "—", row.email || "—", new Date(row.created_at).toLocaleString(), roleLabel(row.role)].forEach((value) => {
+            const cell = document.createElement("td");
+            cell.textContent = value;
+            line.append(cell);
+          });
+          body.append(line);
+        });
+      }
+      async function recordLogin(session) {
+        const key = "tzuspark-login-" + session.user.id;
+        if (sessionStorage.getItem(key)) return;
+        const { data } = await client.from("profiles").select("email,display_name,role").eq("id", session.user.id).maybeSingle();
+        if (!data) return;
+        const { error } = await client.from("login_logs").insert({
+          user_id: session.user.id,
+          email: data.email || session.user.email || "",
+          display_name: data.display_name || "",
+          role: data.role || ""
+        });
+        if (!error) sessionStorage.setItem(key, "1");
+      }
       async function loadOffice() {
         const session = (await client.auth.getSession()).data.session;
         document.getElementById("gate").hidden = Boolean(session);
@@ -511,15 +758,26 @@
         profile = data;
         document.getElementById("role-badge").textContent = roleLabel(profile.role);
         const staff = profile.role === "admin" || profile.role === "super_admin";
-        setHero(staff ? "資料庫" : "後台", staff ? "Database" : "Back office");
-        document.getElementById("role-note").textContent = staff
-          ? t("這裡是網站瀏覽數據。管理員可以新增最新資訊，超級管理員可以改全站內容。", "These are the site analytics. Admins can add news. The super admin can edit the whole site.")
-          : t("你可以傳訊息、提問、索取報價，並查看登入後的產品細節。", "You can send a message, ask a question, request a quote, and read the extra product details.");
-        document.getElementById("panel-data").hidden = !staff;
+        const waiting = profile.role === "pending" || profile.role === "rejected";
+        document.getElementById("side").hidden = !staff;
+        document.getElementById("side-users").hidden = profile.role !== "super_admin";
         document.getElementById("panel-visitor").hidden = profile.role !== "visitor";
-        document.getElementById("form-news").hidden = !staff;
-        document.getElementById("panel-super").hidden = profile.role !== "super_admin";
-        if (staff) drawData();
+        document.getElementById("panel-pending").hidden = !waiting;
+        document.getElementById("pending-copy").textContent = profile.role === "rejected"
+          ? t("這個帳號已被拒絕，無法進入公告、審核或數據。", "This account was rejected and cannot open announcements, approval, or analytics.")
+          : t("帳號正在待審核。超級管理員核准後才能進入公告管理、登入總覽和資料庫。", "Your account is pending. A super admin must approve it before you can open announcements, the login overview, or the database.");
+        if (!staff) {
+          setHero(waiting ? "待審核" : "後台", waiting ? "Pending" : "Back office");
+          document.getElementById("form-news").hidden = true;
+          document.getElementById("panel-data").hidden = true;
+          document.getElementById("panel-users").hidden = true;
+          document.getElementById("panel-logins").hidden = true;
+          document.getElementById("panel-super").hidden = true;
+        }
+        document.getElementById("role-note").textContent = staff
+          ? t("左側選擇要管理的項目。新註冊的帳號要由超級管理員手動核准。", "Choose a section on the left. New accounts stay pending until a super admin approves them.")
+          : (waiting ? "" : t("你可以傳訊息、提問、索取報價，並查看登入後的產品細節。", "You can send a message, ask a question, request a quote, and read the extra product details."));
+        if (staff) showSection(section === "users" && profile.role !== "super_admin" ? "news" : section);
         if (profile.role === "visitor") {
           const products = await client.from("product_details").select("flavor,detail_zh,detail_en").order("flavor");
           const list = document.getElementById("product-list");
@@ -552,37 +810,8 @@
             const en = document.createElement("textarea");
             en.name = row.key + ":en";
             en.value = row.value_en;
-            block.append(title, zh, en);
+            block.append(title, fieldLabel("中文", "Chinese"), zh, fieldLabel("英文", "English"), en);
             fields.append(block);
-          });
-          const people = await client.from("profiles").select("id,email,display_name,role").order("created_at");
-          const peopleBox = document.getElementById("people");
-          peopleBox.replaceChildren();
-          (people.data || []).forEach((person) => {
-            const item = document.createElement("form");
-            item.className = "item";
-            const title = document.createElement("h3");
-            title.textContent = (person.display_name || person.email) + " · " + person.email;
-            const select = document.createElement("select");
-            ["visitor", "admin", "super_admin"].forEach((role) => {
-              const option = document.createElement("option");
-              option.value = role;
-              option.textContent = roleLabel(role);
-              option.selected = person.role === role;
-              select.append(option);
-            });
-            const button = document.createElement("button");
-            button.className = "btn btn-line";
-            button.type = "submit";
-            button.textContent = t("更新身分", "Update role");
-            item.append(title, select, button);
-            item.addEventListener("submit", async (event) => {
-              event.preventDefault();
-              const { error: updateError } = await client.from("profiles").update({ role: select.value }).eq("id", person.id);
-              showAlert(officeAlert, updateError ? updateError.message : t("身分已更新。", "Role updated."), !updateError);
-              if (!updateError) loadOffice();
-            });
-            peopleBox.append(item);
           });
           const inbox = await client.from("messages").select("id,kind,topic,body,reply,created_at").order("created_at", { ascending: false });
           renderMessages(document.getElementById("inbox"), inbox.data || [], true);
@@ -621,10 +850,12 @@
         }
         showAlert(officeAlert, failed || t("全站文字已同步。", "Site text synced."), !failed);
       });
-      client.auth.onAuthStateChange((event) => {
+      client.auth.onAuthStateChange(async (event, session) => {
         if (event === "PASSWORD_RECOVERY") showView("reset");
+        if (event === "SIGNED_IN" && session) await recordLogin(session);
         loadOffice();
       });
+      document.addEventListener("tz-locale", () => { if (profile) loadOffice(); });
       if (location.hash.indexOf("type=recovery") !== -1) showView("reset");
       loadOffice();
     }
