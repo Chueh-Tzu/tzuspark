@@ -1,7 +1,10 @@
-const CACHE = "tzuspark-v1";
+const CACHE = "tzuspark-v3";
 const FILES = [
   "./",
   "./index.html",
+  "./account.html",
+  "./supabase-config.js",
+  "./supabase-live.js",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",

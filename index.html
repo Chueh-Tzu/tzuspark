@@ -17,6 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Calistoga&family=Cormorant+Garamond:wght@600;700&family=Fraunces:ital,opsz,wght@1,9..144,560;1,9..144,640&family=Noto+Sans+TC:wght@500;700&family=Nunito:wght@400;600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
+    [hidden] { display: none !important; }
     :root {
       --wine: #6B2A36;
       --ink: #4A2430;
@@ -387,6 +388,13 @@
     .btn-outline { background: #fff; color: var(--wine); border-color: var(--wine); }
     .btn-outline:hover { background: var(--wine); color: #fff; }
     .nav-actions .btn { padding: 9px 18px; font-size: 15px; }
+    .btn-login { background: #fff; color: var(--wine); }
+    .btn-login:hover { background: var(--blush); color: var(--wine); }
+    .news { padding: 12px 0 8px; }
+    .news-list { display: grid; gap: 14px; }
+    .news-card { background: #fff; border-radius: 18px; padding: 18px 20px; box-shadow: 0 10px 24px rgba(107, 42, 54, 0.08); }
+    .news-card h3 { margin: 0 0 6px; color: var(--wine); font-family: Calistoga, serif; font-weight: 400; }
+    [data-content] { white-space: pre-line; }
     .hero-visual {
       position: relative;
       height: 530px;
@@ -1004,6 +1012,7 @@
           <div class="nav-actions">
             <button type="button" class="lang-toggle" data-locale-toggle aria-label="切換為中文">中文</button>
             <a class="btn btn-gold" href="#contact"><span class="zh">聯絡我們</span><span class="en">Contact Us</span></a>
+            <a class="btn btn-login" id="account-link" href="account.html"><span class="zh">登入/註冊</span><span class="en">Sign in</span></a>
           </div>
         </div>
       </div>
@@ -1022,8 +1031,9 @@
       <div class="wrap hero-grid">
         <div>
           <h1>TzuSpark</h1>
-          <p class="slogan">Innovating Today.<br>Connecting Tomorrow.</p>
-          <p class="lede">Dedicated to providing high-quality products and professional services, helping you achieve greater success.</p>
+          <p class="slogan" data-content="hero_slogan">Innovating Today.
+Connecting Tomorrow.</p>
+          <p class="lede" data-content="hero_lede">Dedicated to providing high-quality products and professional services, helping you achieve greater success.</p>
           <div class="hero-actions">
             <a class="btn btn-gold" href="#products"><span class="zh">產品介紹</span><span class="en">Our Products</span></a>
             <a class="btn btn-outline" href="#contact"><span class="zh">聯絡我們</span><span class="en">Contact Us</span></a>
@@ -1281,8 +1291,8 @@
       <div class="wrap split">
         <div>
           <h2>About Us</h2>
-          <p>TzuSpark started as a personal idea: a soda with a real snap of flavor and no artificial color. The line grew from that spark into four sparkling cans, and into a small production path for partners who want a can of their own.</p>
-          <p>The kangaroo on every can is there for one reason. Keep the joy in view.</p>
+          <p data-content="about_p1">TzuSpark started as a personal idea: a soda with a real snap of flavor and no artificial color. The line grew from that spark into four sparkling cans, and into a small production path for partners who want a can of their own.</p>
+          <p data-content="about_p2">The kangaroo on every can is there for one reason. Keep the joy in view.</p>
           <p class="quote">Crisp. Zesty. Unmistakably TzuSpark.</p>
         </div>
         <div class="mascot-stage" aria-hidden="true">
@@ -1292,11 +1302,20 @@
       </div>
     </section>
 
+    <section class="news" id="news" hidden>
+      <div class="wrap">
+        <div class="center-copy">
+          <h2><span class="zh">最新資訊</span><span class="en">Latest</span></h2>
+        </div>
+        <div class="news-list" id="news-list"></div>
+      </div>
+    </section>
+
     <section class="contact" id="contact">
       <div class="wrap split">
         <div class="intro">
           <h2>Contact Us</h2>
-          <p>Tell us about a flavor, a partnership, or a question. We read every note.</p>
+          <p data-content="contact_intro">Tell us about a flavor, a partnership, or a question. We read every note.</p>
           <p>Use the form to reach TzuSpark. Add your name, email, and a short message, and choose the topic that fits.</p>
         </div>
         <div>
@@ -1412,6 +1431,7 @@
         langToggle.setAttribute("aria-label", isEn ? "切換為中文" : "Switch to English");
       }
       if (searchInput) searchInput.placeholder = isEn ? "Search" : "搜尋";
+      document.dispatchEvent(new CustomEvent("tzuspark-locale"));
     }
     langToggle.addEventListener("click", () => {
       setLocale(document.documentElement.getAttribute("data-locale") === "en" ? "zh" : "en");
@@ -1607,5 +1627,8 @@
       navigator.serviceWorker.register("./sw.js");
     }
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-config.js"></script>
+  <script src="./supabase-live.js"></script>
 </body>
 </html>

@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" data-locale="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>後台登入 | TzuSpark</title>
+  <meta name="theme-color" content="#6B2A36">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Calistoga&family=Noto+Sans+TC:wght@500;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --wine: #6B2A36; --ink: #4A2430; --muted: #8A5964; --blush: #F8D5DC; --cream: #FFF6F2; --paper: #FFFCF9; --plum: #6f3458; --gold: #F2C14B; --line: #f0d5d8; }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; background: var(--cream); color: var(--ink); font-family: "Source Sans 3", "Noto Sans TC", sans-serif; }
+    a { color: inherit; }
+    .hero { background: var(--wine); color: #fff; padding: 28px 0 26px; }
+    .wrap { width: min(1040px, calc(100% - 40px)); margin: 0 auto; }
+    .crumbs { margin: 0; color: rgba(255,255,255,.7); font-size: 13px; }
+    .crumbs a { color: var(--gold); text-decoration: none; }
+    .hero h1 { margin: 6px 0 0; font-family: Calistoga, "Noto Sans TC", serif; font-weight: 400; font-size: clamp(36px, 5vw, 52px); }
+    .hero-tools { margin-top: 14px; display: flex; gap: 10px; }
+    main { padding: 28px 0 72px; }
+    .auth-wrap { max-width: 560px; }
+    .card { background: #fff; border: 1px solid var(--line); border-left: 4px solid var(--gold); border-radius: 18px; padding: 26px 26px 22px; box-shadow: 0 16px 36px rgba(107, 42, 54, .08); }
+    h2 { margin: 0 0 16px; color: var(--wine); font-size: 28px; font-weight: 700; }
+    label { display: block; margin: 14px 0 6px; font-weight: 700; color: var(--wine); }
+    input, textarea, select { width: 100%; border: 1px solid #ecd3d6; border-radius: 12px; padding: 12px 14px; font: inherit; background: var(--paper); color: var(--ink); }
+    textarea { min-height: 96px; resize: vertical; }
+    .password-field { position: relative; }
+    .password-field input { padding-right: 46px; }
+    .eye { position: absolute; top: 50%; right: 8px; transform: translateY(-50%); width: 34px; height: 34px; border: 0; background: transparent; color: var(--wine); cursor: pointer; }
+    .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; min-width: 112px; border-radius: 999px; padding: 10px 18px; border: 1px solid transparent; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; background: #fff; color: var(--wine); }
+    .btn-fill { background: var(--plum); color: #fff; }
+    .btn-line { border-color: var(--wine); }
+    .alert { border-radius: 12px; padding: 12px 14px; margin: 0 0 14px; background: #fff4e8; }
+    .alert.ok { background: #eef8e8; }
+    .hint { color: var(--muted); margin: 0 0 12px; line-height: 1.5; }
+    .grid { display: grid; gap: 14px; }
+    .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 14px; }
+    .stat, .panel { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; }
+    .stat { border-top: 4px solid var(--wine); }
+    .stat b { display: block; margin-top: 8px; color: var(--wine); font-size: 34px; line-height: 1; }
+    .stat span, .muted { color: var(--muted); }
+    .charts { grid-template-columns: 1.3fr .9fr; }
+    .panel h2 { font-size: 26px; }
+    .panel svg { width: 100%; height: auto; display: block; }
+    .bar { display: grid; grid-template-columns: 120px 1fr auto; gap: 10px; align-items: center; margin: 8px 0; }
+    .track { height: 12px; background: #f8e7ea; border-radius: 99px; overflow: hidden; }
+    .fill { display: block; height: 100%; background: var(--wine); border-radius: 99px; }
+    .bar:first-child .fill { background: var(--gold); }
+    .legend { display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 8px 0 0; padding: 0; list-style: none; }
+    .legend li { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; }
+    .swatch { width: 12px; height: 12px; border-radius: 99px; }
+    .item { border-top: 1px solid var(--line); padding: 12px 0; }
+    .item h3 { margin: 0 0 4px; }
+    .role { display: inline-block; background: var(--blush); color: var(--wine); border-radius: 999px; padding: 4px 10px; font-weight: 700; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    html[data-locale="en"] .zh { display: none; }
+    html[data-locale="zh"] .en { display: none; }
+    @media (max-width: 800px) { .stats, .charts, .two, .bar { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <p class="crumbs"><a href="index.html">TzuSpark</a> / <span id="crumb-now"><span class="zh">後台登入</span><span class="en">Admin login</span></span></p>
+      <h1 id="hero-title"><span class="zh">後台登入</span><span class="en">Admin login</span></h1>
+      <div class="hero-tools">
+        <button type="button" class="btn btn-line" id="lang">EN</button>
+        <button type="button" class="btn btn-fill" id="sign-out" hidden><span class="zh">登出</span><span class="en">Sign out</span></button>
+      </div>
+    </div>
+  </header>
+  <main>
+    <section class="wrap auth-wrap" id="gate">
+      <div class="card">
+        <div id="auth-alert" class="alert" hidden></div>
+        <div id="view-login">
+          <h2><span class="zh">登入</span><span class="en">Sign in</span></h2>
+          <form id="form-in">
+            <label for="login-email"><span class="zh">電子郵件</span><span class="en">Email</span></label>
+            <input id="login-email" name="email" type="email" autocomplete="username" required>
+            <label for="login-password"><span class="zh">密碼</span><span class="en">Password</span></label>
+            <div class="password-field">
+              <input id="login-password" name="password" type="password" minlength="6" autocomplete="current-password" required>
+              <button class="eye" type="button" data-eye="login-password" aria-label="Show password">◉</button>
+            </div>
+          </form>
+        </div>
+        <div id="view-register" hidden>
+          <h2><span class="zh">註冊</span><span class="en">Register</span></h2>
+          <form id="form-up">
+            <label for="reg-name"><span class="zh">顯示名稱</span><span class="en">Display name</span></label>
+            <input id="reg-name" name="name" required>
+            <label for="reg-email"><span class="zh">電子郵件</span><span class="en">Email</span></label>
+            <input id="reg-email" name="email" type="email" autocomplete="email" required>
+            <label for="reg-password"><span class="zh">密碼（至少 6 碼）</span><span class="en">Password (min 6)</span></label>
+            <div class="password-field">
+              <input id="reg-password" name="password" type="password" minlength="6" autocomplete="new-password" required>
+              <button class="eye" type="button" data-eye="reg-password" aria-label="Show password">◉</button>
+            </div>
+            <label for="reg-password2"><span class="zh">確認密碼</span><span class="en">Confirm password</span></label>
+            <div class="password-field">
+              <input id="reg-password2" name="password2" type="password" minlength="6" required>
+              <button class="eye" type="button" data-eye="reg-password2" aria-label="Show password">◉</button>
+            </div>
+          </form>
+        </div>
+        <div id="view-forgot" hidden>
+          <h2><span class="zh">忘記密碼</span><span class="en">Forgot password</span></h2>
+          <p class="hint"><span class="zh">輸入註冊信箱，我們會寄送重設密碼連結。</span><span class="en">Enter your email and we will send a reset link.</span></p>
+          <form id="form-forgot">
+            <label for="forgot-email"><span class="zh">電子郵件</span><span class="en">Email</span></label>
+            <input id="forgot-email" name="email" type="email" required>
+          </form>
+        </div>
+        <div id="view-reset" hidden>
+          <h2><span class="zh">設定新密碼</span><span class="en">Set a new password</span></h2>
+          <form id="form-reset">
+            <label for="reset-password"><span class="zh">新密碼</span><span class="en">New password</span></label>
+            <input id="reset-password" name="password" type="password" minlength="6" required>
+            <label for="reset-password2"><span class="zh">確認新密碼</span><span class="en">Confirm new password</span></label>
+            <input id="reset-password2" name="password2" type="password" minlength="6" required>
+          </form>
+        </div>
+        <div class="actions">
+          <button class="btn btn-fill" type="button" id="tab-login"><span class="zh">登入</span><span class="en">Sign in</span></button>
+          <button class="btn btn-line" type="button" id="tab-register"><span class="zh">註冊</span><span class="en">Register</span></button>
+          <button class="btn btn-line" type="button" id="tab-forgot"><span class="zh">忘記密碼</span><span class="en">Forgot password</span></button>
+          <a class="btn btn-line" href="index.html"><span class="zh">回首頁</span><span class="en">Home</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap" id="office" hidden>
+      <p class="role" id="role-badge"></p>
+      <p class="hint" id="role-note"></p>
+      <div id="office-alert" class="alert" hidden></div>
+
+      <div id="panel-data" hidden>
+        <div class="grid stats" id="db-stats"></div>
+        <div class="grid charts">
+          <article class="panel"><h2><span class="zh">瀏覽趨勢</span><span class="en">Browsing trend</span></h2><p class="muted" id="trend-note"></p><div id="db-line"></div></article>
+          <article class="panel"><h2><span class="zh">內容點閱占比</span><span class="en">Click share</span></h2><p class="muted" id="pie-note"></p><div id="db-pie"></div></article>
+        </div>
+        <article class="panel" style="margin-top:14px"><h2><span class="zh">每日瀏覽人數</span><span class="en">Daily visitors</span></h2><p class="muted" id="daily-note"></p><div id="db-daily"></div></article>
+        <article class="panel" style="margin-top:14px"><h2><span class="zh">頁面瀏覽</span><span class="en">Page views</span></h2><p class="muted" id="page-note"></p><div id="db-bars"></div></article>
+      </div>
+
+      <div id="panel-visitor" hidden>
+        <form class="card" id="form-visitor" style="margin-top:14px">
+          <h2><span class="zh">寫給官方</span><span class="en">Write to TzuSpark</span></h2>
+          <label><span class="zh">類型</span><span class="en">Type</span>
+            <select name="kind">
+              <option value="message">傳送訊息 / Message</option>
+              <option value="question">詢問問題 / Question</option>
+              <option value="quote">索取報價單 / Request a quote</option>
+              <option value="product_info">索取產品詳細資料 / Product details</option>
+            </select>
+          </label>
+          <div class="two">
+            <label><span class="zh">姓名</span><span class="en">Name</span><input name="name" required></label>
+            <label><span class="zh">電子郵件</span><span class="en">Email</span><input name="email" type="email" required></label>
+          </div>
+          <label><span class="zh">主題</span><span class="en">Topic</span><input name="topic" required></label>
+          <label><span class="zh">內容</span><span class="en">Details</span><textarea name="body" required></textarea></label>
+          <p><button class="btn btn-fill" type="submit"><span class="zh">送出</span><span class="en">Send</span></button></p>
+        </form>
+        <section class="panel" style="margin-top:14px"><h2><span class="zh">登入後可看的產品細節</span><span class="en">Extra product details</span></h2><div id="product-list"></div></section>
+        <section class="panel" style="margin-top:14px"><h2><span class="zh">我的訊息與回覆</span><span class="en">My notes and replies</span></h2><div id="my-messages"></div></section>
+      </div>
+
+      <form class="card" id="form-news" hidden style="margin-top:14px">
+        <h2><span class="zh">新增最新資訊</span><span class="en">Add a news item</span></h2>
+        <div class="two">
+          <label><span class="zh">中文標題</span><span class="en">Chinese title</span><input name="title_zh" required></label>
+          <label><span class="zh">英文標題</span><span class="en">English title</span><input name="title_en" required></label>
+        </div>
+        <label><span class="zh">中文內容</span><span class="en">Chinese text</span><textarea name="body_zh" required></textarea></label>
+        <label><span class="zh">英文內容</span><span class="en">English text</span><textarea name="body_en" required></textarea></label>
+        <p><button class="btn btn-fill" type="submit"><span class="zh">發布到首頁</span><span class="en">Publish</span></button></p>
+      </form>
+
+      <div id="panel-super" hidden>
+        <form class="card" id="form-content" style="margin-top:14px">
+          <h2><span class="zh">修改全站文字</span><span class="en">Edit site text</span></h2>
+          <div id="content-fields"></div>
+          <p><button class="btn btn-fill" type="submit"><span class="zh">儲存並同步到首頁</span><span class="en">Save</span></button></p>
+        </form>
+        <section class="panel" style="margin-top:14px"><h2><span class="zh">管理員名單</span><span class="en">People and roles</span></h2><div id="people"></div></section>
+        <section class="panel" style="margin-top:14px"><h2><span class="zh">訪客來信</span><span class="en">Visitor inbox</span></h2><div id="inbox"></div></section>
+      </div>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-config.js"></script>
+  <script>
+    const langButton = document.getElementById("lang");
+    function isZh() { return document.documentElement.getAttribute("data-locale") !== "en"; }
+    function t(zh, en) { return isZh() ? zh : en; }
+    function setLocale(next) {
+      const zh = next !== "en";
+      document.documentElement.lang = zh ? "zh-Hant" : "en";
+      document.documentElement.setAttribute("data-locale", zh ? "zh" : "en");
+      localStorage.setItem("tzuspark-locale", zh ? "zh" : "en");
+      langButton.textContent = zh ? "EN" : "中文";
+    }
+    setLocale(localStorage.getItem("tzuspark-locale") || "zh");
+    langButton.addEventListener("click", () => setLocale(isZh() ? "en" : "zh"));
+    document.querySelectorAll("[data-eye]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const input = document.getElementById(button.getAttribute("data-eye"));
+        const show = input.type === "password";
+        input.type = show ? "text" : "password";
+        button.textContent = show ? "◌" : "◉";
+      });
+    });
+
+    const views = { login: "view-login", register: "view-register", forgot: "view-forgot", reset: "view-reset" };
+    const tabs = { login: "tab-login", register: "tab-register", forgot: "tab-forgot" };
+    function showView(name) {
+      Object.entries(views).forEach(([key, id]) => { document.getElementById(id).hidden = key !== name; });
+      Object.entries(tabs).forEach(([key, id]) => {
+        document.getElementById(id).className = "btn " + (key === name ? "btn-fill" : "btn-line");
+      });
+    }
+    document.getElementById("tab-login").addEventListener("click", () => {
+      if (!document.getElementById("view-login").hidden) document.getElementById("form-in").requestSubmit();
+      else showView("login");
+    });
+    document.getElementById("tab-register").addEventListener("click", () => {
+      if (!document.getElementById("view-register").hidden) document.getElementById("form-up").requestSubmit();
+      else showView("register");
+    });
+    document.getElementById("tab-forgot").addEventListener("click", () => {
+      if (!document.getElementById("view-forgot").hidden) document.getElementById("form-forgot").requestSubmit();
+      else showView("forgot");
+    });
+
+    const client = window.tzCreateClient();
+    const authAlert = document.getElementById("auth-alert");
+    const officeAlert = document.getElementById("office-alert");
+    function showAlert(box, message, ok) {
+      box.hidden = !message;
+      box.textContent = message || "";
+      box.classList.toggle("ok", Boolean(ok));
+    }
+    if (!client) {
+      showAlert(authAlert, t("還沒讀到 Supabase 連線資訊。", "The Supabase connection is missing."), false);
+    } else {
+      let profile = null;
+      const sections = [
+        ["#home", "首頁", "Home"],
+        ["#products", "產品介紹", "Our Products"],
+        ["#details", "產品資訊", "Product Details"],
+        ["#oem", "代工服務", "OEM"],
+        ["#process", "製造流程", "Process"],
+        ["#about", "關於我們", "About"],
+        ["#contact", "聯絡我們", "Contact"],
+        ["#faq", "常見問題", "FAQ"]
+      ];
+      const colors = ["#6B2A36", "#F2C14B", "#7A3A62", "#F6C4AE", "#8A5964", "#6f3458", "#C46B73", "#E7B15A"];
+
+      document.getElementById("form-in").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        const { error } = await client.auth.signInWithPassword({ email: String(data.get("email")), password: String(data.get("password")) });
+        showAlert(authAlert, error ? error.message : "", false);
+      });
+      document.getElementById("form-up").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        if (data.get("password") !== data.get("password2")) {
+          showAlert(authAlert, t("兩次密碼不一致。", "The passwords do not match."), false);
+          return;
+        }
+        const { data: created, error } = await client.auth.signUp({
+          email: String(data.get("email")),
+          password: String(data.get("password")),
+          options: { data: { display_name: String(data.get("name")) }, emailRedirectTo: location.origin + location.pathname }
+        });
+        if (error) showAlert(authAlert, error.message, false);
+        else if (!created.session) showAlert(authAlert, t("請到信箱點確認信，再回來登入。", "Check your email, then sign in."), true);
+      });
+      document.getElementById("form-forgot").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        const { error } = await client.auth.resetPasswordForEmail(String(data.get("email")), { redirectTo: location.origin + location.pathname });
+        showAlert(authAlert, error ? error.message : t("重設信已寄出。", "Reset email sent."), !error);
+      });
+      document.getElementById("form-reset").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        if (data.get("password") !== data.get("password2")) {
+          showAlert(authAlert, t("兩次密碼不一致。", "The passwords do not match."), false);
+          return;
+        }
+        const { error } = await client.auth.updateUser({ password: String(data.get("password")) });
+        showAlert(authAlert, error ? error.message : t("密碼已更新，請登入。", "Password updated. Please sign in."), !error);
+        if (!error) showView("login");
+      });
+      document.getElementById("sign-out").addEventListener("click", () => client.auth.signOut());
+
+      function roleLabel(role) {
+        if (role === "super_admin") return t("超級管理員", "Super admin");
+        if (role === "admin") return t("管理員", "Admin");
+        return t("一般訪客", "Visitor");
+      }
+      function setHero(zh, en) {
+        document.getElementById("hero-title").innerHTML = '<span class="zh">' + zh + '</span><span class="en">' + en + '</span>';
+        document.getElementById("crumb-now").innerHTML = '<span class="zh">' + zh + '</span><span class="en">' + en + '</span>';
+      }
+      function emptyNote() {
+        const p = document.createElement("p");
+        p.className = "muted";
+        p.textContent = t("尚無資料。有人瀏覽網站後，這裡會出現圖表。", "No data yet. Charts appear after someone browses the site.");
+        return p;
+      }
+      function bars(target, rows) {
+        target.replaceChildren();
+        if (!rows.some((row) => row.count)) { target.append(emptyNote()); return; }
+        const max = Math.max(...rows.map((row) => row.count), 1);
+        rows.forEach((row) => {
+          const line = document.createElement("div");
+          line.className = "bar";
+          const label = document.createElement("span");
+          label.textContent = row.label;
+          const track = document.createElement("span");
+          track.className = "track";
+          const fill = document.createElement("span");
+          fill.className = "fill";
+          fill.style.width = Math.round((row.count / max) * 100) + "%";
+          track.append(fill);
+          const value = document.createElement("b");
+          value.textContent = String(row.count);
+          line.append(label, track, value);
+          target.append(line);
+        });
+      }
+      function lineChart(target, labels, views, people) {
+        const width = 640, height = 220, pad = 28;
+        const max = Math.max(1, ...views, ...people);
+        const step = (width - pad * 2) / Math.max(labels.length - 1, 1);
+        const point = (value, index) => [pad + step * index, height - pad - (value / max) * (height - pad * 2)];
+        const path = (series) => series.map((value, index) => point(value, index).join(",")).join(" ");
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("viewBox", "0 0 " + width + " " + height);
+        const poly = (series, color) => {
+          const node = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+          node.setAttribute("fill", "none");
+          node.setAttribute("stroke", color);
+          node.setAttribute("stroke-width", "3");
+          node.setAttribute("points", path(series));
+          return node;
+        };
+        svg.append(poly(views, "#6B2A36"), poly(people, "#F2C14B"));
+        labels.forEach((label, index) => {
+          if (index % 2) return;
+          const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          text.setAttribute("x", String(point(0, index)[0]));
+          text.setAttribute("y", String(height - 6));
+          text.setAttribute("font-size", "11");
+          text.setAttribute("fill", "#8A5964");
+          text.textContent = label.slice(5);
+          svg.append(text);
+        });
+        target.replaceChildren(svg);
+      }
+      function pie(target, rows) {
+        const total = rows.reduce((sum, row) => sum + row.count, 0);
+        target.replaceChildren();
+        if (!total) { target.append(emptyNote()); return; }
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("viewBox", "0 0 120 120");
+        let angle = -Math.PI / 2;
+        rows.forEach((row, index) => {
+          if (!row.count) return;
+          const slice = (row.count / total) * Math.PI * 2;
+          const end = angle + slice;
+          const large = slice > Math.PI ? 1 : 0;
+          const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          const x1 = 60 + Math.cos(angle) * 46, y1 = 60 + Math.sin(angle) * 46;
+          const x2 = 60 + Math.cos(end) * 46, y2 = 60 + Math.sin(end) * 46;
+          path.setAttribute("d", "M60 60 L" + x1 + " " + y1 + " A46 46 0 " + large + " 1 " + x2 + " " + y2 + " Z");
+          path.setAttribute("fill", colors[index % colors.length]);
+          svg.append(path);
+          angle = end;
+        });
+        const hole = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        hole.setAttribute("cx", "60"); hole.setAttribute("cy", "60"); hole.setAttribute("r", "24"); hole.setAttribute("fill", "#fff");
+        svg.append(hole);
+        const legend = document.createElement("ul");
+        legend.className = "legend";
+        rows.forEach((row, index) => {
+          const item = document.createElement("li");
+          const swatch = document.createElement("i");
+          swatch.className = "swatch";
+          swatch.style.background = colors[index % colors.length];
+          item.append(swatch, document.createTextNode(row.label + " " + row.count));
+          legend.append(item);
+        });
+        target.append(svg, legend);
+      }
+      async function drawData() {
+        const { data, error } = await client.from("site_events").select("visitor_id,session_id,event_type,path,label,duration_seconds,created_at").order("created_at", { ascending: false }).limit(2000);
+        const stats = document.getElementById("db-stats");
+        if (error) { showAlert(officeAlert, error.message, false); return; }
+        const rows = data || [];
+        const visitors = new Set();
+        let views = 0;
+        const stay = {};
+        const dayKeys = [];
+        for (let i = 13; i >= 0; i -= 1) {
+          const day = new Date();
+          day.setDate(day.getDate() - i);
+          dayKeys.push(day.toISOString().slice(0, 10));
+        }
+        const dayViews = Object.fromEntries(dayKeys.map((key) => [key, 0]));
+        const dayPeople = Object.fromEntries(dayKeys.map((key) => [key, new Set()]));
+        const sectionCounts = Object.fromEntries(sections.map((item) => [item[0], 0]));
+        rows.forEach((row) => {
+          const key = String(row.created_at || "").slice(0, 10);
+          if (row.event_type === "pageview") {
+            views += 1;
+            if (row.visitor_id) visitors.add(row.visitor_id);
+            if (dayViews[key] != null) { dayViews[key] += 1; if (row.visitor_id) dayPeople[key].add(row.visitor_id); }
+            const path = row.path || "";
+            if (sectionCounts[path] != null) sectionCounts[path] += 1;
+          } else if (row.event_type === "duration" && row.session_id) {
+            stay[row.session_id] = (stay[row.session_id] || 0) + (Number(row.duration_seconds) || 0);
+          }
+        });
+        const sessions = Object.values(stay);
+        const average = sessions.length ? Math.round(sessions.reduce((sum, value) => sum + value, 0) / sessions.length) : 0;
+        const cards = [
+          [t("瀏覽人數", "Visitors"), visitors.size, t("不同的訪客", "Distinct people")],
+          [t("瀏覽次數", "Page views"), views, t("頁面被打開的次數", "Times a page was opened")],
+          [t("平均停留", "Time on site"), average + t(" 秒", " sec"), t("每人每次造訪大約停留", "Typical stay per visit")]
+        ];
+        stats.replaceChildren();
+        cards.forEach(([label, value, hint]) => {
+          const card = document.createElement("article");
+          card.className = "stat";
+          const name = document.createElement("span");
+          name.textContent = label;
+          const number = document.createElement("b");
+          number.textContent = String(value);
+          const note = document.createElement("p");
+          note.className = "muted";
+          note.textContent = hint;
+          card.append(name, number, note);
+          stats.append(card);
+        });
+        document.getElementById("trend-note").textContent = t("近 14 日。酒紅是瀏覽次數，金色是當天不同訪客。", "Last 14 days. Wine is views, gold is distinct visitors.");
+        document.getElementById("daily-note").textContent = t("近 14 日，每一條是當天不同的訪客。", "Last 14 days. Each bar is that day's distinct visitors.");
+        document.getElementById("pie-note").textContent = t("主選單各區的瀏覽占比。", "Share of visits across the main menu.");
+        document.getElementById("page-note").textContent = t("主選單各區的瀏覽次數。", "Views of each main-menu section.");
+        lineChart(document.getElementById("db-line"), dayKeys, dayKeys.map((key) => dayViews[key]), dayKeys.map((key) => dayPeople[key].size));
+        bars(document.getElementById("db-daily"), dayKeys.map((key) => ({ label: key.slice(5), count: dayPeople[key].size })));
+        const sectionRows = sections.map((item) => ({ label: t(item[1], item[2]), count: sectionCounts[item[0]] }));
+        pie(document.getElementById("db-pie"), sectionRows);
+        bars(document.getElementById("db-bars"), sectionRows);
+      }
+      function renderMessages(target, rows, canReply) {
+        target.replaceChildren();
+        if (!rows.length) { target.append(emptyNote()); return; }
+        rows.forEach((row) => {
+          const item = document.createElement("article");
+          item.className = "item";
+          const title = document.createElement("h3");
+          title.textContent = row.kind + " · " + row.topic;
+          const body = document.createElement("p");
+          body.textContent = row.body;
+          item.append(title, body);
+          if (row.reply) {
+            const reply = document.createElement("p");
+            reply.textContent = t("官方回覆：", "Reply: ") + row.reply;
+            item.append(reply);
+          }
+          if (canReply) {
+            const form = document.createElement("form");
+            const input = document.createElement("textarea");
+            input.required = true;
+            const button = document.createElement("button");
+            button.className = "btn btn-line";
+            button.type = "submit";
+            button.textContent = t("送出回覆", "Send reply");
+            form.append(input, button);
+            form.addEventListener("submit", async (event) => {
+              event.preventDefault();
+              const { error } = await client.from("messages").update({ reply: input.value, status: "replied" }).eq("id", row.id);
+              showAlert(officeAlert, error ? error.message : t("回覆已儲存。", "Reply saved."), !error);
+              if (!error) loadOffice();
+            });
+            item.append(form);
+          }
+          target.append(item);
+        });
+      }
+      async function loadOffice() {
+        const session = (await client.auth.getSession()).data.session;
+        document.getElementById("gate").hidden = Boolean(session);
+        document.getElementById("office").hidden = !session;
+        document.getElementById("sign-out").hidden = !session;
+        if (!session) { setHero("後台登入", "Admin login"); return; }
+        const { data, error } = await client.from("profiles").select("id,email,display_name,role").eq("id", session.user.id).single();
+        if (error || !data) { showAlert(officeAlert, error ? error.message : t("帳號資料還沒準備好。", "Your profile is not ready yet."), false); return; }
+        profile = data;
+        document.getElementById("role-badge").textContent = roleLabel(profile.role);
+        const staff = profile.role === "admin" || profile.role === "super_admin";
+        setHero(staff ? "資料庫" : "後台", staff ? "Database" : "Back office");
+        document.getElementById("role-note").textContent = staff
+          ? t("這裡是網站瀏覽數據。管理員可以新增最新資訊，超級管理員可以改全站內容。", "These are the site analytics. Admins can add news. The super admin can edit the whole site.")
+          : t("你可以傳訊息、提問、索取報價，並查看登入後的產品細節。", "You can send a message, ask a question, request a quote, and read the extra product details.");
+        document.getElementById("panel-data").hidden = !staff;
+        document.getElementById("panel-visitor").hidden = profile.role !== "visitor";
+        document.getElementById("form-news").hidden = !staff;
+        document.getElementById("panel-super").hidden = profile.role !== "super_admin";
+        if (staff) drawData();
+        if (profile.role === "visitor") {
+          const products = await client.from("product_details").select("flavor,detail_zh,detail_en").order("flavor");
+          const list = document.getElementById("product-list");
+          list.replaceChildren();
+          (products.data || []).forEach((item) => {
+            const block = document.createElement("article");
+            block.className = "item";
+            const title = document.createElement("h3");
+            title.textContent = item.flavor;
+            const body = document.createElement("p");
+            body.textContent = isZh() ? item.detail_zh : item.detail_en;
+            block.append(title, body);
+            list.append(block);
+          });
+          const mine = await client.from("messages").select("kind,topic,body,reply,created_at").eq("user_id", profile.id).order("created_at", { ascending: false });
+          renderMessages(document.getElementById("my-messages"), mine.data || [], false);
+        }
+        if (profile.role === "super_admin") {
+          const content = await client.from("site_content").select("key,value_zh,value_en").order("key");
+          const fields = document.getElementById("content-fields");
+          fields.replaceChildren();
+          (content.data || []).forEach((row) => {
+            const block = document.createElement("div");
+            block.className = "item";
+            const title = document.createElement("h3");
+            title.textContent = row.key;
+            const zh = document.createElement("textarea");
+            zh.name = row.key + ":zh";
+            zh.value = row.value_zh;
+            const en = document.createElement("textarea");
+            en.name = row.key + ":en";
+            en.value = row.value_en;
+            block.append(title, zh, en);
+            fields.append(block);
+          });
+          const people = await client.from("profiles").select("id,email,display_name,role").order("created_at");
+          const peopleBox = document.getElementById("people");
+          peopleBox.replaceChildren();
+          (people.data || []).forEach((person) => {
+            const item = document.createElement("form");
+            item.className = "item";
+            const title = document.createElement("h3");
+            title.textContent = (person.display_name || person.email) + " · " + person.email;
+            const select = document.createElement("select");
+            ["visitor", "admin", "super_admin"].forEach((role) => {
+              const option = document.createElement("option");
+              option.value = role;
+              option.textContent = roleLabel(role);
+              option.selected = person.role === role;
+              select.append(option);
+            });
+            const button = document.createElement("button");
+            button.className = "btn btn-line";
+            button.type = "submit";
+            button.textContent = t("更新身分", "Update role");
+            item.append(title, select, button);
+            item.addEventListener("submit", async (event) => {
+              event.preventDefault();
+              const { error: updateError } = await client.from("profiles").update({ role: select.value }).eq("id", person.id);
+              showAlert(officeAlert, updateError ? updateError.message : t("身分已更新。", "Role updated."), !updateError);
+              if (!updateError) loadOffice();
+            });
+            peopleBox.append(item);
+          });
+          const inbox = await client.from("messages").select("id,kind,topic,body,reply,created_at").order("created_at", { ascending: false });
+          renderMessages(document.getElementById("inbox"), inbox.data || [], true);
+        }
+      }
+      document.getElementById("form-visitor").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        const { error } = await client.from("messages").insert({
+          user_id: profile.id, kind: String(data.get("kind")), name: String(data.get("name")),
+          email: String(data.get("email")), topic: String(data.get("topic")), body: String(data.get("body"))
+        });
+        showAlert(officeAlert, error ? error.message : t("已送出。", "Sent."), !error);
+        if (!error) { event.currentTarget.reset(); loadOffice(); }
+      });
+      document.getElementById("form-news").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        const { error } = await client.from("news").insert({
+          title_zh: String(data.get("title_zh")), title_en: String(data.get("title_en")),
+          body_zh: String(data.get("body_zh")), body_en: String(data.get("body_en")), published: true, created_by: profile.id
+        });
+        showAlert(officeAlert, error ? error.message : t("最新資訊已發布，首頁會即時更新。", "News published. The homepage updates live."), !error);
+        if (!error) event.currentTarget.reset();
+      });
+      document.getElementById("form-content").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        const keys = new Set([...data.keys()].map((key) => key.split(":")[0]));
+        let failed = "";
+        for (const key of keys) {
+          const { error } = await client.from("site_content").update({
+            value_zh: String(data.get(key + ":zh") || ""), value_en: String(data.get(key + ":en") || ""), updated_by: profile.id
+          }).eq("key", key);
+          if (error) failed = error.message;
+        }
+        showAlert(officeAlert, failed || t("全站文字已同步。", "Site text synced."), !failed);
+      });
+      client.auth.onAuthStateChange((event) => {
+        if (event === "PASSWORD_RECOVERY") showView("reset");
+        loadOffice();
+      });
+      if (location.hash.indexOf("type=recovery") !== -1) showView("reset");
+      loadOffice();
+    }
+  </script>
+</body>
+</html>
