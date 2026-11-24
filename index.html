@@ -129,23 +129,30 @@
       align-items: center;
       justify-content: space-between;
       gap: 20px;
-      min-height: 76px;
-      padding: 8px 0;
+      min-height: 116px;
+      padding: 10px 0;
     }
     .brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
     .brand-logo {
-      width: 58px;
-      height: 58px;
+      width: 96px;
+      height: 96px;
       border-radius: 50%;
       display: grid;
       place-items: center;
       color: var(--wine);
-      border: 1.5px solid #e7b4c0;
-      background: #fff;
+      border: 1.5px solid #f0c4b6;
+      background: #F8D7C8;
       text-decoration: none;
       flex: none;
+      overflow: hidden;
+      box-shadow: 0 6px 14px rgba(120, 52, 62, 0.12);
     }
-    .brand-logo svg { width: 34px; height: 34px; }
+    .brand-logo img {
+      width: 92%;
+      height: 92%;
+      max-width: none;
+      object-fit: contain;
+    }
     .brand-text { display: grid; text-decoration: none; color: inherit; min-width: 0; }
     .brand-kicker {
       font-size: 11px;
@@ -320,6 +327,17 @@
       flex: none;
     }
     .logo svg { width: 36px; height: 36px; }
+    .logo-mark {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: #F8D7C8;
+      border: 1.5px solid #f0c4b6;
+      box-sizing: border-box;
+      object-fit: contain;
+      padding: 3px;
+      box-shadow: 0 6px 14px rgba(80, 20, 30, 0.18);
+    }
     .logo span { font-size: 1.7rem; letter-spacing: -0.03em; line-height: 1; }
     .hub-search { display: flex; justify-content: flex-end; margin: 0 0 18px; }
     .site-search { position: relative; width: min(280px, 100%); }
@@ -678,9 +696,19 @@
       line-height: 1.25;
     }
     .can-base { font-size: 8px; letter-spacing: 0.08em; opacity: 0.92; }
-    .mascot-wrap { position: relative; height: 102px; }
-    .mascot { width: 92px; height: 102px; margin: 0 auto; color: #E8873A; }
-    .prop { position: absolute; width: 32px; height: 32px; right: 14px; top: 46px; }
+    .mascot-wrap { position: relative; height: 96px; }
+    .mascot { width: 152px; height: 96px; margin: 0 auto; object-fit: cover; object-position: center 50%; display: block; }
+    .prop {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      right: -2px;
+      bottom: 8px;
+      padding: 3px;
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 3px 0 rgba(90, 30, 40, 0.08);
+    }
     .bubbles {
       position: absolute;
       top: 10px;
@@ -845,7 +873,7 @@
       background: #F3B7A8;
       transform: translateX(-50%) rotate(-8deg);
     }
-    .big-roo { width: 210px; height: 230px; position: relative; z-index: 1; color: #F0A04A; filter: drop-shadow(0 10px 8px rgba(120,50,60,.15)); }
+    .big-roo { width: min(100%, 340px); height: 190px; object-fit: contain; position: relative; z-index: 1; filter: drop-shadow(0 10px 8px rgba(120,50,60,.15)); }
 
     .contact { background: var(--cream); padding: 78px 0; }
     form { display: grid; gap: 12px; background: #fff; border-radius: 22px; padding: 22px; box-shadow: var(--shadow); }
@@ -1005,24 +1033,6 @@
 </head>
 <body>
   <a class="skip" href="#home"><span class="zh">跳到內容</span><span class="en">Skip to content</span></a>
-  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-    <symbol id="kangaroo" viewBox="0 0 140 160">
-      <path d="M44 108c-24 8-34-16-16-30" fill="none" stroke="#E8873A" stroke-width="9" stroke-linecap="round"/>
-      <ellipse cx="48" cy="132" rx="17" ry="8" fill="#E8873A"/>
-      <ellipse cx="80" cy="134" rx="14" ry="7.5" fill="#E8873A"/>
-      <ellipse cx="64" cy="100" rx="26" ry="30" fill="#E8873A"/>
-      <ellipse cx="72" cy="108" rx="14" ry="18" fill="#fff1d4"/>
-      <path d="M78 94c18 4 28-10 22-24" fill="none" stroke="#E8873A" stroke-width="8" stroke-linecap="round"/>
-      <circle cx="90" cy="58" r="20" fill="#E8873A"/>
-      <ellipse cx="74" cy="34" rx="6.5" ry="14" fill="#E8873A" transform="rotate(-16 74 34)"/>
-      <ellipse cx="92" cy="30" rx="6.5" ry="15" fill="#E8873A" transform="rotate(8 92 30)"/>
-      <ellipse cx="93" cy="32" rx="3" ry="8" fill="#f4b8c4" transform="rotate(8 93 32)"/>
-      <circle cx="100" cy="56" r="2.3" fill="#4a2a22"/>
-      <path d="M92 66q9 8 16-1" fill="none" stroke="#4a2a22" stroke-width="1.8" stroke-linecap="round"/>
-      <circle cx="106" cy="64" r="2.8" fill="#f3a0a8"/>
-    </symbol>
-  </svg>
-
   <header class="site-chrome">
     <div class="notice-bar">
       <div class="wrap notice-inner">
@@ -1047,11 +1057,7 @@
       <div class="wrap branding-inner">
         <div class="brand">
           <a class="brand-logo" href="#home" aria-label="TzuSpark">
-            <svg viewBox="0 0 48 48" aria-hidden="true">
-              <circle cx="24" cy="24" r="18" fill="none" stroke="currentColor" stroke-width="2.1"/>
-              <ellipse cx="24" cy="24" rx="8" ry="18" fill="none" stroke="currentColor" stroke-width="2.1"/>
-              <path d="M6 24h36M8.5 16.5h31M8.5 31.5h31" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
-            </svg>
+            <img src="icons/logo-mark-circle.png" alt="">
           </a>
           <a class="brand-text" href="#home">
             <span class="brand-kicker"><span class="zh">全天然氣泡汽水</span><span class="en">All Natural Sparkling Soda</span></span>
@@ -1250,8 +1256,8 @@ Connecting Tomorrow.</p>
                 <p class="can-name">TzuSpark</p>
                 <p class="can-kind">Premium<br>Ginger Ale</p>
                 <div class="mascot-wrap">
-                  <svg class="mascot" viewBox="0 0 140 160" aria-hidden="true"><use href="#kangaroo"/></svg>
-                  <svg class="prop" viewBox="0 0 36 36" aria-hidden="true"><rect x="8" y="8" width="14" height="18" rx="3" fill="#fff6e8" stroke="#e7d3b0"/><path d="M22 13h5a4 4 0 0 1 0 8h-5" fill="none" stroke="#e7d3b0" stroke-width="1.6"/><path d="M11 16h8" stroke="#f0b429" stroke-width="2"/></svg>
+                  <img class="mascot" src="icons/logo-mark.png" alt="">
+                  <svg class="prop" viewBox="0 0 40 40" aria-hidden="true"><ellipse cx="15" cy="24" rx="8" ry="5" fill="#E39A3C" stroke="#B86A22" transform="rotate(-24 15 24)"/><ellipse cx="25" cy="22" rx="9" ry="5.2" fill="#F0B15A" stroke="#C47A28" transform="rotate(16 25 22)"/><ellipse cx="20" cy="27" rx="6" ry="4.2" fill="#D4892E"/><path d="M23 16c1-5 4.2-7 6.4-5.6" fill="none" stroke="#5F9A16" stroke-width="1.7" stroke-linecap="round"/><path d="M26 12.2c2.2-.4 4.2 1 4.6 2.8" fill="none" stroke="#8FBE3A" stroke-width="1.5" stroke-linecap="round"/></svg>
                 </div>
                 <p class="can-base">All Natural<br>Sparkling Soda</p>
                 <span class="barcode" aria-hidden="true"></span>
@@ -1270,8 +1276,8 @@ Connecting Tomorrow.</p>
                 <p class="can-name">TzuSpark</p>
                 <p class="can-kind">Premium<br>Cranberry Ginger Ale</p>
                 <div class="mascot-wrap">
-                  <svg class="mascot" viewBox="0 0 140 160" aria-hidden="true"><use href="#kangaroo"/></svg>
-                  <svg class="prop" viewBox="0 0 36 36" aria-hidden="true"><circle cx="13" cy="20" r="7" fill="#7a1830"/><circle cx="23" cy="18" r="7" fill="#a82440"/><path d="M16 12c3-6 8-6 10-2" fill="none" stroke="#d8f0a8" stroke-width="1.5"/></svg>
+                  <img class="mascot" src="icons/logo-mark.png" alt="">
+                  <svg class="prop" viewBox="0 0 40 40" aria-hidden="true"><path d="M18 16c2.2-6 8-7.2 11.2-4" fill="none" stroke="#6FA31A" stroke-width="1.6" stroke-linecap="round"/><ellipse cx="27" cy="12" rx="4.2" ry="2" fill="#8FBE3A" transform="rotate(-24 27 12)"/><circle cx="15" cy="25" r="8" fill="#C81E3A"/><circle cx="26" cy="22" r="7.4" fill="#E23B4A"/><ellipse cx="12.6" cy="22.4" rx="2.2" ry="1.2" fill="#fff" opacity=".55"/><ellipse cx="23.8" cy="19.6" rx="2" ry="1.1" fill="#fff" opacity=".45"/></svg>
                 </div>
                 <p class="can-base">All Natural<br>Sparkling Soda</p>
                 <span class="barcode" aria-hidden="true"></span>
@@ -1290,8 +1296,8 @@ Connecting Tomorrow.</p>
                 <p class="can-name">TzuSpark</p>
                 <p class="can-kind">Premium<br>Lime</p>
                 <div class="mascot-wrap">
-                  <svg class="mascot" viewBox="0 0 140 160" aria-hidden="true"><use href="#kangaroo"/></svg>
-                  <svg class="prop" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="10" fill="#e7ff9a" stroke="#fff"/><path d="M18 8v20M8 18h20M11 11l14 14M11 25 25 11" stroke="#5f9a16" stroke-width="1.2"/></svg>
+                  <img class="mascot" src="icons/logo-mark.png" alt="">
+                  <svg class="prop" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="13" fill="#7EAF32"/><circle cx="20" cy="20" r="10.5" fill="#D6F26A"/><path d="M20 10.2v19.6M10.2 20h19.6M13 13l14 14M13 27 27 13" stroke="#5F9A16" stroke-width="1.3" stroke-linecap="round"/><circle cx="20" cy="20" r="2.1" fill="#F4E36A"/></svg>
                 </div>
                 <p class="can-base">All Natural<br>Sparkling Soda</p>
                 <span class="barcode" aria-hidden="true"></span>
@@ -1310,8 +1316,8 @@ Connecting Tomorrow.</p>
                 <p class="can-name">TzuSpark</p>
                 <p class="can-kind">Premium<br>Black Cherry</p>
                 <div class="mascot-wrap">
-                  <svg class="mascot" viewBox="0 0 140 160" aria-hidden="true"><use href="#kangaroo"/></svg>
-                  <svg class="prop" viewBox="0 0 36 36" aria-hidden="true"><path d="M14 14c2-7 8-8 12-6M22 12c1-6 4-8 8-6" fill="none" stroke="#d8f0a8" stroke-width="1.4"/><circle cx="13" cy="22" r="7" fill="#6a1840"/><circle cx="24" cy="20" r="7" fill="#8e2860"/></svg>
+                  <img class="mascot" src="icons/logo-mark.png" alt="">
+                  <svg class="prop" viewBox="0 0 40 40" aria-hidden="true"><path d="M16 16c2-7.2 8.4-8.4 12.2-5.2" fill="none" stroke="#6FA31A" stroke-width="1.6" stroke-linecap="round"/><path d="M24 14.5c1.4-6 5-7.4 8.2-5" fill="none" stroke="#6FA31A" stroke-width="1.5" stroke-linecap="round"/><ellipse cx="22" cy="9.5" rx="4.6" ry="2.1" fill="#8FBE3A" transform="rotate(-28 22 9.5)"/><circle cx="14" cy="26" r="8" fill="#8E1848"/><circle cx="26" cy="24" r="8" fill="#C43A74"/><ellipse cx="11.6" cy="23.4" rx="2.1" ry="1.2" fill="#fff" opacity=".45"/><ellipse cx="23.6" cy="21.4" rx="2" ry="1.1" fill="#fff" opacity=".4"/></svg>
                 </div>
                 <p class="can-base">All Natural<br>Sparkling Soda</p>
                 <span class="barcode" aria-hidden="true"></span>
@@ -1397,7 +1403,7 @@ Connecting Tomorrow.</p>
         </div>
         <div class="mascot-stage" aria-hidden="true">
           <div class="blob"></div>
-          <svg class="big-roo" viewBox="0 0 140 160"><use href="#kangaroo"/></svg>
+          <img class="big-roo" src="icons/logo-mark.png" alt="">
         </div>
       </div>
     </section>
@@ -1500,12 +1506,7 @@ Connecting Tomorrow.</p>
   <footer class="site-footer">
     <div class="wrap footer-bar">
       <a class="logo" href="#home">
-        <svg viewBox="0 0 48 48" aria-hidden="true">
-          <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="2.4"/>
-          <ellipse cx="24" cy="24" rx="9" ry="20" fill="none" stroke="currentColor" stroke-width="2"/>
-          <path d="M4 24h40M8 16h32M8 32h32" fill="none" stroke="currentColor" stroke-width="2"/>
-          <circle cx="36" cy="13" r="3" fill="#F2C14B" stroke="none"/>
-        </svg>
+        <img class="logo-mark" src="icons/logo-mark-circle.png" alt="">
         <span>TzuSpark</span>
       </a>
       <span class="footer-partner"><span class="zh">你可信賴的夥伴</span><span class="en">Your Trusted Partner</span></span>
