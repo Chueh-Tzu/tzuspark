@@ -84,9 +84,9 @@
     <div class="wrap">
       <p class="crumbs"><a href="index.html">TzuSpark</a> / <span id="crumb-now"><span class="zh">後台登入</span><span class="en">Admin login</span></span></p>
       <h1 id="hero-title"><span class="zh">後台登入</span><span class="en">Admin login</span></h1>
-      <div class="hero-tools">
-        <button type="button" class="btn btn-line" id="lang">EN</button>
-        <button type="button" class="btn btn-fill" id="sign-out" hidden><span class="zh">登出</span><span class="en">Sign out</span></button>
+      <div class="hero-tools" id="hero-tools" hidden>
+        <a class="btn" id="view-home" href="index.html"><span class="zh">瀏覽首頁</span><span class="en">View homepage</span></a>
+        <button type="button" class="btn btn-fill" id="sign-out"><span class="zh">登出</span><span class="en">Sign out</span></button>
       </div>
     </div>
   </header>
@@ -108,6 +108,7 @@
         </div>
         <div id="view-register" hidden>
           <h2><span class="zh">註冊</span><span class="en">Register</span></h2>
+          <div class="alert" id="register-alert" hidden></div>
           <form id="form-up">
             <label for="reg-name"><span class="zh">顯示名稱</span><span class="en">Display name</span></label>
             <input id="reg-name" name="name" required>
@@ -124,17 +125,16 @@
               <button class="eye" type="button" data-eye="reg-password2" aria-label="Show password">◉</button>
             </div>
             <p class="submit-row"><button class="btn btn-fill" type="submit"><span class="zh">送出</span><span class="en">Submit</span></button></p>
-            <div class="alert" id="register-alert" hidden></div>
           </form>
         </div>
         <div id="view-forgot" hidden>
           <h2><span class="zh">忘記密碼</span><span class="en">Forgot password</span></h2>
+          <div class="alert" id="forgot-alert" hidden></div>
           <p class="hint"><span class="zh">輸入註冊信箱，我們會寄送重設密碼連結。</span><span class="en">Enter your email and we will send a reset link.</span></p>
           <form id="form-forgot">
             <label for="forgot-email"><span class="zh">電子郵件</span><span class="en">Email</span></label>
             <input id="forgot-email" name="email" type="email" required>
             <p class="submit-row"><button class="btn btn-fill" type="submit"><span class="zh">送出</span><span class="en">Submit</span></button></p>
-            <div class="alert" id="forgot-alert" hidden></div>
           </form>
         </div>
         <div id="view-reset" hidden>
@@ -261,7 +261,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./supabase-config.js"></script>
   <script>
-    const langButton = document.getElementById("lang");
     function isZh() { return document.documentElement.getAttribute("data-locale") !== "en"; }
     function t(zh, en) { return isZh() ? zh : en; }
     function setLocale(next) {
@@ -269,11 +268,9 @@
       document.documentElement.lang = zh ? "zh-Hant" : "en";
       document.documentElement.setAttribute("data-locale", zh ? "zh" : "en");
       localStorage.setItem("tzuspark-locale", zh ? "zh" : "en");
-      langButton.textContent = zh ? "EN" : "中文";
       document.dispatchEvent(new CustomEvent("tz-locale"));
     }
     setLocale(localStorage.getItem("tzuspark-locale") || "en");
-    langButton.addEventListener("click", () => setLocale(isZh() ? "en" : "zh"));
     function syncKindOptions() {
       const select = document.getElementById("kind-select");
       if (!select) return;
@@ -376,7 +373,7 @@
         const { data: created, error } = await client.auth.signUp({
           email: String(data.get("email")),
           password: String(data.get("password")),
-          options: { data: { display_name: String(data.get("name")) }, emailRedirectTo: location.origin + location.pathname }
+          options: { data: { display_name: String(data.get("name")) }, emailRedirectTo: "https://tzuspark.vercel.app/index.html" }
         });
         if (error) showAlert(registerAlert, error.message, false);
         else if (!created.session) showAlert(registerAlert, t("申請已送出，請等待管理員審核。", "Your application has been sent. Please wait for an admin to review it."), true);
@@ -385,7 +382,7 @@
         event.preventDefault();
         const data = new FormData(event.currentTarget);
         const forgotAlert = document.getElementById("forgot-alert");
-        const { error } = await client.auth.resetPasswordForEmail(String(data.get("email")), { redirectTo: location.origin + location.pathname });
+        const { error } = await client.auth.resetPasswordForEmail(String(data.get("email")), { redirectTo: "https://tzuspark.vercel.app/account.html" });
         showAlert(forgotAlert, error ? error.message : t("申請已送出，請至該信箱確認。", "Your request has been sent. Please check that inbox."), !error);
       });
       document.getElementById("form-reset").addEventListener("submit", async (event) => {
@@ -703,6 +700,17 @@
             });
             actions.append(button);
           });
+          if (person.id !== profile.id) {
+            const remove = actionButton("remove", "移除帳號", "Remove account", false);
+            remove.addEventListener("click", async () => {
+              const name = person.display_name || person.email;
+              if (!window.confirm(t("確定要移除「" + name + "」嗎？移除後這個帳號無法再登入。", "Remove " + name + "? This account will not be able to sign in."))) return;
+              const { error: removeError } = await client.rpc("remove_account", { target: person.id });
+              showAlert(officeAlert, removeError ? removeError.message : t("已移除帳號。", "Account removed."), !removeError);
+              if (!removeError) loadUsers();
+            });
+            actions.append(remove);
+          }
           row.append(info, actions);
           list.append(row);
         });
@@ -751,7 +759,7 @@
         const session = (await client.auth.getSession()).data.session;
         document.getElementById("gate").hidden = Boolean(session);
         document.getElementById("office").hidden = !session;
-        document.getElementById("sign-out").hidden = !session;
+        document.getElementById("hero-tools").hidden = !session;
         if (!session) { setHero("後台登入", "Admin login"); return; }
         const { data, error } = await client.from("profiles").select("id,email,display_name,role").eq("id", session.user.id).single();
         if (error || !data) { showAlert(officeAlert, error ? error.message : t("帳號資料還沒準備好。", "Your profile is not ready yet."), false); return; }
