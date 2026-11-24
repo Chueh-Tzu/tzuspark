@@ -75,7 +75,7 @@
     }
     .skip:focus { top: 12px; }
     .wrap { width: min(1240px, calc(100% - 40px)); margin-inline: auto; }
-    section[id] { scroll-margin-top: var(--header); }
+    section[id], .offer[id] { scroll-margin-top: calc(var(--header) + 16px); }
     #home { scroll-margin-top: 0; }
 
     h1, h2, h3, .logo span {
@@ -273,7 +273,30 @@
       font-weight: 600;
     }
     .nav .drop-menu a:hover,
-    .nav .drop-menu a[aria-current="page"] { background: rgba(107, 42, 54, 0.08); }
+    .nav .drop-menu a[aria-current="page"] { background: #FFF6F2; color: var(--wine); }
+    .page-hero {
+      background: var(--wine);
+      color: #fff;
+      padding: 28px 0 32px;
+    }
+    .page-hero h1 {
+      margin: 8px 0 0;
+      color: #fff;
+      font-family: "Cormorant Garamond", "Noto Serif TC", Georgia, serif;
+      font-size: clamp(32px, 4.2vw, 48px);
+      font-weight: 600;
+      line-height: 1.15;
+    }
+    .crumbs { margin: 0; color: rgba(255, 255, 255, 0.72); font-size: 14px; }
+    .crumbs a { color: var(--nav-gold); text-decoration: none; font-weight: 700; }
+    .crumbs a:hover { text-decoration: underline; }
+    body.view-page .hero,
+    body.view-page .hub,
+    body.view-page main > section:not(.is-shown) { display: none !important; }
+    body.view-page main > section.is-shown { padding-top: 48px; }
+    body.view-page main > section.is-shown h2 { display: none; }
+    body.view-page section.card-focus .offer { display: none !important; }
+    body.view-page section.card-focus .offer.is-shown { display: block !important; }
     .lang-toggle {
       border: 1px solid rgba(255, 255, 255, 0.28);
       border-radius: 999px;
@@ -1089,7 +1112,14 @@
     </div>
   </header>
 
-  <main>
+  <header class="page-hero" id="page-hero" hidden>
+    <div class="wrap">
+      <p class="crumbs" id="page-crumbs"></p>
+      <h1 id="page-title"></h1>
+    </div>
+  </header>
+
+  <main id="main">
     <section class="hero" id="home">
       <svg class="circuit circuit-tl" viewBox="0 0 220 150" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
         <path d="M8 28h70v48h78"/><circle cx="78" cy="28" r="4" fill="currentColor"/><circle cx="78" cy="76" r="4" fill="currentColor"/><circle cx="156" cy="76" r="4" fill="currentColor"/>
@@ -1626,24 +1656,98 @@ Connecting Tomorrow.</p>
       });
     }
 
+    function closeMenus() {
+      document.body.classList.remove("nav-open");
+      if (toggle) toggle.setAttribute("aria-expanded", "false");
+      nav.querySelectorAll(".drop").forEach((drop) => {
+        drop.classList.remove("is-open");
+        const trigger = drop.querySelector(".drop-trigger");
+        if (trigger) trigger.setAttribute("aria-expanded", "false");
+      });
+    }
+    const pages = {
+      about: ["公司介紹", "Company", "關於我們", "About Us"],
+      process: ["公司介紹", "Company", "製造流程", "Manufacturing Process"],
+      oem: ["公司介紹", "Company", "代工服務", "OEM Services"],
+      products: ["產品", "Products", "產品介紹", "Our Products"],
+      details: ["產品", "Products", "產品資訊", "Product Details"],
+      esg: ["ESG", "ESG", "ESG", "ESG"],
+      "esg-environment": ["ESG", "ESG", "環境", "Environment"],
+      "esg-social": ["ESG", "ESG", "社會", "Social"],
+      "esg-governance": ["ESG", "ESG", "治理", "Governance"],
+      news: ["新聞", "News", "最新資訊", "Latest"],
+      faq: ["問與答", "Q&A", "常見問題", "FAQ"],
+      contact: ["", "", "聯絡我們", "Contact Us"]
+    };
+    const pageHero = document.getElementById("page-hero");
+    const homeTitle = document.title;
+    function openPage(href) {
+      const id = (href || "#home").replace(/^#/, "") || "home";
+      const page = pages[id];
+      closeMenus();
+      document.querySelectorAll("main > section").forEach((section) => {
+        section.classList.remove("is-shown", "card-focus");
+      });
+      document.querySelectorAll("#esg .offer").forEach((card) => card.classList.remove("is-shown"));
+      if (!page) {
+        document.body.classList.remove("view-page");
+        pageHero.hidden = true;
+        setActive("#home");
+        document.title = homeTitle;
+        window.scrollTo(0, 0);
+        return;
+      }
+      const target = document.getElementById(id);
+      const section = target ? target.closest("main > section") : null;
+      if (!section) return;
+      document.body.classList.add("view-page");
+      section.classList.add("is-shown");
+      if (target !== section) {
+        section.classList.add("card-focus");
+        target.classList.add("is-shown");
+      }
+      const group = page[0]
+        ? ' / <span class="zh">' + page[0] + '</span><span class="en">' + page[1] + "</span>"
+        : "";
+      pageHero.querySelector(".crumbs").innerHTML =
+        '<a href="#home">TzuSpark</a>' + group +
+        ' / <span class="zh">' + page[2] + '</span><span class="en">' + page[3] + "</span>";
+      pageHero.querySelector("h1").innerHTML =
+        '<span class="zh">' + page[2] + '</span><span class="en">' + page[3] + "</span>";
+      pageHero.hidden = false;
+      setActive("#" + id);
+      document.title = (document.documentElement.getAttribute("data-locale") === "en" ? page[3] : page[2]) + " | TzuSpark";
+      window.scrollTo(0, 0);
+    }
+    function goHash(href) {
+      if (href === "#home") {
+        if (location.hash) history.pushState(null, "", location.pathname + location.search);
+        openPage("#home");
+        return;
+      }
+      if (location.hash === href) openPage(href);
+      else location.hash = href;
+    }
     toggle.addEventListener("click", () => {
       const open = document.body.classList.toggle("nav-open");
       toggle.setAttribute("aria-expanded", String(open));
     });
-    links.forEach((link) => {
-      link.addEventListener("click", () => {
-        document.body.classList.remove("nav-open");
-        toggle.setAttribute("aria-expanded", "false");
-        nav.querySelectorAll(".drop").forEach((drop) => {
-          drop.classList.remove("is-open");
-          const trigger = drop.querySelector(".drop-trigger");
-          if (trigger) trigger.setAttribute("aria-expanded", "false");
-        });
-      });
+    document.addEventListener("click", (event) => {
+      const link = event.target.closest("a");
+      if (!link || !link.getAttribute("href")) return;
+      const href = link.getAttribute("href");
+      if (href.charAt(0) !== "#" || href === "#main") return;
+      if (href !== "#home" && !pages[href.slice(1)]) return;
+      event.preventDefault();
+      goHash(href);
     });
+    window.addEventListener("hashchange", () => openPage(location.hash || "#home"));
+    window.addEventListener("popstate", () => openPage(location.hash || "#home"));
+    openPage(location.hash || "#home");
 
     const sections = links.map((link) => document.querySelector(link.getAttribute("href"))).filter(Boolean);
     function updateActive() {
+      if (document.body.classList.contains("view-page")) return;
       const line = 150;
       let current = links[0].getAttribute("href");
       sections.forEach((section) => {
@@ -1687,8 +1791,7 @@ Connecting Tomorrow.</p>
           button.addEventListener("click", () => {
             closeSearch();
             searchInput.value = "";
-            document.querySelector(href).scrollIntoView({ behavior: "smooth" });
-            setActive(href);
+            goHash(href);
           });
           item.appendChild(button);
           searchResults.appendChild(item);
