@@ -1,4 +1,4 @@
-const CACHE = "tzuspark-v13";
+const CACHE = "tzuspark-v15";
 const FILES = [
   "./",
   "./index.html",
