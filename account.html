@@ -68,8 +68,10 @@
     .account-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; background: #fff; border: 1px solid var(--line); border-left: 4px solid var(--gold); border-radius: 16px; padding: 14px 16px; margin: 0 0 12px; }
     .account-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
     table { width: 100%; border-collapse: collapse; }
-    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
     th { color: var(--wine); font-size: 14px; }
+    #panel-changes th, #panel-changes td { white-space: nowrap; }
+    #panel-changes .change-item { white-space: pre-wrap; line-height: 1.5; min-width: 280px; }
     html[data-locale="en"] .zh { display: none; }
     html[data-locale="zh"] .en { display: none; }
     @media (max-width: 800px) {
@@ -170,6 +172,10 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 7h12M8 12h12M8 17h12"/><path d="M4 7h.01M4 12h.01M4 17h.01"/></svg>
             <span><span class="zh">登入總覽</span><span class="en">Login overview</span></span>
           </button>
+          <button type="button" class="side-link" data-section="changes">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="8"/><path d="M16.5 3.5l1.2 2.3 2.3 1.2-2.3 1.2-1.2 2.3-1.2-2.3-2.3-1.2 2.3-1.2z"/></svg>
+            <span><span class="zh">後台變更</span><span class="en">Office changes</span></span>
+          </button>
           <button type="button" class="side-link" data-section="data">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>
             <span><span class="zh">資料庫</span><span class="en">Database</span></span>
@@ -243,6 +249,25 @@
               </tr>
             </thead>
             <tbody id="login-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="panel-changes" hidden>
+        <p class="hint" id="change-count"></p>
+        <div class="panel" style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th><span class="zh">名稱</span><span class="en">Name</span></th>
+                <th><span class="zh">帳號</span><span class="en">Account</span></th>
+                <th><span class="zh">時間</span><span class="en">Time</span></th>
+                <th><span class="zh">身分</span><span class="en">Role</span></th>
+                <th><span class="zh">變更</span><span class="en">Change</span></th>
+                <th><span class="zh">項目</span><span class="en">Item</span></th>
+              </tr>
+            </thead>
+            <tbody id="change-body"></tbody>
           </table>
         </div>
       </div>
@@ -410,6 +435,7 @@
         news: ["公告管理", "Announcements"],
         users: ["管理員審核", "Admin approval"],
         logins: ["登入總覽", "Login overview"],
+        changes: ["後台變更", "Office changes"],
         data: ["資料庫", "Database"]
       };
       function setHero(zh, en) {
@@ -607,8 +633,13 @@
             form.addEventListener("submit", async (event) => {
               event.preventDefault();
               const { error } = await client.from("messages").update({ reply: input.value, status: "replied" }).eq("id", row.id);
-              showAlert(officeAlert, error ? error.message : t("回覆已儲存。", "Reply saved."), !error);
-              if (!error) loadOffice();
+              if (!error) {
+                const logged = await recordChange("update",
+                  "回覆訪客來信。類型「" + (row.kind || "") + "」。主題「" + (row.topic || "") + "」。原訊息「" + (row.body || "") + "」。回覆內容「" + input.value + "」。",
+                  "Replied to a visitor message. Type \"" + (row.kind || "") + "\". Topic \"" + (row.topic || "") + "\". Original message \"" + (row.body || "") + "\". Reply \"" + input.value + "\".");
+                showAlert(officeAlert, logged ? logged.message : t("回覆已儲存。", "Reply saved."), !logged);
+                loadOffice();
+              } else showAlert(officeAlert, error.message, false);
             });
             item.append(form);
           }
@@ -621,14 +652,16 @@
           button.classList.toggle("is-on", button.getAttribute("data-section") === name);
         });
         document.getElementById("form-news").hidden = name !== "news";
-        document.getElementById("panel-super").hidden = name !== "news" || !profile || profile.role !== "super_admin";
+        document.getElementById("panel-super").hidden = name !== "news" || !profile || (profile.role !== "admin" && profile.role !== "super_admin");
         document.getElementById("panel-users").hidden = name !== "users";
         document.getElementById("panel-logins").hidden = name !== "logins";
+        document.getElementById("panel-changes").hidden = name !== "changes";
         document.getElementById("panel-data").hidden = name !== "data";
         const title = sectionTitles[name] || sectionTitles.news;
         setHero(title[0], title[1]);
         if (name === "data") drawData();
         if (name === "users") loadUsers();
+        if (name === "changes") loadChanges();
         if (name === "logins") loadLogins();
       }
       document.querySelectorAll(".side-link").forEach((button) => {
@@ -676,38 +709,48 @@
           const actions = document.createElement("div");
           actions.className = "account-actions";
           const buttons = [];
-          if (person.role === "pending" || person.role === "rejected") {
-            buttons.push(["admin", "核准為管理員", "Approve as admin", true]);
-            buttons.push(["visitor", "設為一般訪客", "Set as visitor", false]);
-            if (person.role === "pending") buttons.push(["rejected", "拒絕", "Reject", false]);
-          } else if (person.role === "visitor") {
-            buttons.push(["admin", "核准為管理員", "Approve as admin", true]);
-          } else if (person.role === "admin") {
-            buttons.push(["visitor", "設為一般訪客", "Set as visitor", false]);
-            buttons.push(["super_admin", "設為超級管理員", "Make super admin", false]);
-          } else if (person.role === "super_admin") {
-            buttons.push(["admin", "核准為管理員", "Approve as admin", false]);
-            buttons.push(["visitor", "設為一般訪客", "Set as visitor", false]);
+          const lockedSuper = profile.role === "admin" && person.role === "super_admin";
+          if (person.id !== profile.id && !lockedSuper) {
+            if (person.role !== "visitor") buttons.push(["visitor", "設為一般訪客", "Set as visitor", false]);
+            if (profile.role === "super_admin" && person.role !== "super_admin") buttons.push(["super_admin", "設為超級管理員", "Make super admin", false]);
+            if (person.role !== "rejected") buttons.push(["rejected", "拒絕", "Reject", false]);
           }
-          if (person.id === profile.id) buttons.length = 0;
           buttons.forEach(([role, zh, en, filled]) => {
             const button = actionButton(role, zh, en, filled);
             if (person.id === profile.id && role === person.role) button.disabled = true;
             button.addEventListener("click", async () => {
               const { error: updateError } = await client.from("profiles").update({ role }).eq("id", person.id);
-              showAlert(officeAlert, updateError ? updateError.message : t("已更新為", "Updated to ") + roleLabel(role), !updateError);
-              if (!updateError) loadUsers();
+              if (updateError) { showAlert(officeAlert, updateError.message, false); return; }
+              const before = rolePair(person.role);
+              const after = rolePair(role);
+              const who = (person.display_name || person.email) + "（" + person.email + "）";
+              const detailZh = role === "rejected"
+                ? "拒絕帳號「" + who + "」的註冊。原本的身分是「" + before[0] + "」。"
+                : "將帳號「" + who + "」的身分從「" + before[0] + "」改為「" + after[0] + "」。";
+              const detailEn = role === "rejected"
+                ? "Rejected the registration of \"" + who + "\". The previous role was \"" + before[1] + "\"."
+                : "Changed the role of \"" + who + "\" from \"" + before[1] + "\" to \"" + after[1] + "\".";
+              const logged = await recordChange("update", detailZh, detailEn);
+              const done = role === "rejected" ? t("已拒絕這個帳號的註冊。", "This account's registration was rejected.") : t("已更新為", "Updated to ") + roleLabel(role);
+              showAlert(officeAlert, logged ? logged.message : done, !logged);
+              loadUsers();
             });
             actions.append(button);
           });
-          if (person.id !== profile.id) {
+          if (person.id !== profile.id && !lockedSuper) {
             const remove = actionButton("remove", "移除帳號", "Remove account", false);
             remove.addEventListener("click", async () => {
               const name = person.display_name || person.email;
               if (!window.confirm(t("確定要移除「" + name + "」嗎？移除後這個帳號無法再登入。", "Remove " + name + "? This account will not be able to sign in."))) return;
               const { error: removeError } = await client.rpc("remove_account", { target: person.id });
-              showAlert(officeAlert, removeError ? removeError.message : t("已移除帳號。", "Account removed."), !removeError);
-              if (!removeError) loadUsers();
+              if (removeError) { showAlert(officeAlert, removeError.message, false); return; }
+              const before = rolePair(person.role);
+              const who = (person.display_name || person.email) + "（" + person.email + "）";
+              const logged = await recordChange("delete",
+                "刪除帳號「" + who + "」。刪除前的身分是「" + before[0] + "」。",
+                "Deleted the account \"" + who + "\". The role before deletion was \"" + before[1] + "\".");
+              showAlert(officeAlert, logged ? logged.message : t("已移除帳號。", "Account removed."), !logged);
+              loadUsers();
             });
             actions.append(remove);
           }
@@ -755,6 +798,71 @@
         });
         if (!error) sessionStorage.setItem(key, "1");
       }
+      function rolePair(role) {
+        if (role === "super_admin") return ["超級管理員", "Super admin"];
+        if (role === "admin") return ["管理員", "Admin"];
+        if (role === "pending") return ["待審核", "Pending"];
+        if (role === "rejected") return ["已拒絕", "Rejected"];
+        return ["一般訪客", "Visitor"];
+      }
+      function contentPair(key) {
+        const names = {
+          hero_slogan: ["首頁標語", "Homepage slogan"],
+          hero_lede: ["首頁說明", "Homepage introduction"],
+          about_p1: ["關於我們第一段", "About us, first paragraph"],
+          about_p2: ["關於我們第二段", "About us, second paragraph"],
+          contact_intro: ["聯絡我們說明", "Contact introduction"]
+        };
+        return names[key] || [key, key];
+      }
+      function actionLabel(action) {
+        if (action === "insert") return t("新增", "Add");
+        if (action === "delete") return t("刪除", "Delete");
+        return t("修改", "Edit");
+      }
+      async function recordChange(action, itemZh, itemEn) {
+        const { error } = await client.from("change_logs").insert({
+          user_id: profile.id,
+          email: profile.email || "",
+          display_name: profile.display_name || "",
+          role: profile.role || "",
+          action,
+          item_zh: itemZh,
+          item_en: itemEn
+        });
+        return error;
+      }
+      async function loadChanges() {
+        const { data, error } = await client.from("change_logs").select("email,display_name,role,action,item_zh,item_en,created_at").order("created_at", { ascending: false }).limit(80);
+        const body = document.getElementById("change-body");
+        const count = document.getElementById("change-count");
+        body.replaceChildren();
+        if (error) { showAlert(officeAlert, error.message, false); return; }
+        const rows = data || [];
+        count.textContent = t("最近 " + rows.length + " 筆變更", "Latest " + rows.length + " changes");
+        if (!rows.length) {
+          const line = document.createElement("tr");
+          const cell = document.createElement("td");
+          cell.colSpan = 6;
+          cell.textContent = t("尚無後台變更。", "No office changes yet.");
+          line.append(cell);
+          body.append(line);
+          return;
+        }
+        rows.forEach((row) => {
+          const line = document.createElement("tr");
+          [row.display_name || "—", row.email || "—", new Date(row.created_at).toLocaleString(), roleLabel(row.role), actionLabel(row.action)].forEach((value) => {
+            const cell = document.createElement("td");
+            cell.textContent = value;
+            line.append(cell);
+          });
+          const item = document.createElement("td");
+          item.className = "change-item";
+          item.textContent = isZh() ? row.item_zh : row.item_en;
+          line.append(item);
+          body.append(line);
+        });
+      }
       async function loadOffice() {
         const session = (await client.auth.getSession()).data.session;
         document.getElementById("gate").hidden = Boolean(session);
@@ -768,24 +876,27 @@
         const staff = profile.role === "admin" || profile.role === "super_admin";
         const waiting = profile.role === "pending" || profile.role === "rejected";
         document.getElementById("side").hidden = !staff;
-        document.getElementById("side-users").hidden = profile.role !== "super_admin";
+        document.getElementById("side-users").hidden = !staff;
         document.getElementById("panel-visitor").hidden = profile.role !== "visitor";
         document.getElementById("panel-pending").hidden = !waiting;
         document.getElementById("pending-copy").textContent = profile.role === "rejected"
           ? t("這個帳號已被拒絕，無法進入公告、審核或數據。", "This account was rejected and cannot open announcements, approval, or analytics.")
-          : t("帳號正在待審核。超級管理員核准後才能進入公告管理、登入總覽和資料庫。", "Your account is pending. A super admin must approve it before you can open announcements, the login overview, or the database.");
+          : t("帳號正在待審核。超級管理員核准後才能進入公告管理、登入總覽、後台變更和資料庫。", "Your account is pending. A super admin must approve it before you can open announcements, the login overview, office changes, or the database.");
         if (!staff) {
           setHero(waiting ? "待審核" : "後台", waiting ? "Pending" : "Back office");
           document.getElementById("form-news").hidden = true;
           document.getElementById("panel-data").hidden = true;
           document.getElementById("panel-users").hidden = true;
           document.getElementById("panel-logins").hidden = true;
+          document.getElementById("panel-changes").hidden = true;
           document.getElementById("panel-super").hidden = true;
         }
-        document.getElementById("role-note").textContent = staff
-          ? t("左側選擇要管理的項目。新註冊的帳號要由超級管理員手動核准。", "Choose a section on the left. New accounts stay pending until a super admin approves them.")
-          : (waiting ? "" : t("你可以傳訊息、提問、索取報價，並查看登入後的產品細節。", "You can send a message, ask a question, request a quote, and read the extra product details."));
-        if (staff) showSection(section === "users" && profile.role !== "super_admin" ? "news" : section);
+        document.getElementById("role-note").textContent = profile.role === "admin"
+          ? t("左側可以瀏覽全部後台。不能修改網站 Logo、設計風格和排版，也不能變更超級管理員的身分。", "You can browse the whole back office. You cannot change the logo, visual style, layout, or a super admin's role.")
+          : (profile.role === "super_admin"
+            ? t("左側選擇要管理的項目。新註冊的帳號要由超級管理員手動核准。", "Choose a section on the left. New accounts stay pending until a super admin approves them.")
+            : (waiting ? "" : t("你可以傳訊息、提問、索取報價，並查看登入後的產品細節。", "You can send a message, ask a question, request a quote, and read the extra product details.")));
+        if (staff) showSection(section);
         if (profile.role === "visitor") {
           const products = await client.from("product_details").select("flavor,detail_zh,detail_en").order("flavor");
           const list = document.getElementById("product-list");
@@ -803,7 +914,7 @@
           const mine = await client.from("messages").select("kind,topic,body,reply,created_at").eq("user_id", profile.id).order("created_at", { ascending: false });
           renderMessages(document.getElementById("my-messages"), mine.data || [], false);
         }
-        if (profile.role === "super_admin") {
+        if (profile.role === "super_admin" || profile.role === "admin") {
           const content = await client.from("site_content").select("key,value_zh,value_en").order("key");
           const fields = document.getElementById("content-fields");
           fields.replaceChildren();
@@ -815,9 +926,11 @@
             const zh = document.createElement("textarea");
             zh.name = row.key + ":zh";
             zh.value = row.value_zh;
+            zh.dataset.original = row.value_zh || "";
             const en = document.createElement("textarea");
             en.name = row.key + ":en";
             en.value = row.value_en;
+            en.dataset.original = row.value_en || "";
             block.append(title, fieldLabel("中文", "Chinese"), zh, fieldLabel("英文", "English"), en);
             fields.append(block);
           });
@@ -838,25 +951,58 @@
       document.getElementById("form-news").addEventListener("submit", async (event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
+        const titleZh = String(data.get("title_zh"));
+        const titleEn = String(data.get("title_en"));
+        const bodyZh = String(data.get("body_zh"));
+        const bodyEn = String(data.get("body_en"));
         const { error } = await client.from("news").insert({
-          title_zh: String(data.get("title_zh")), title_en: String(data.get("title_en")),
-          body_zh: String(data.get("body_zh")), body_en: String(data.get("body_en")), published: true, created_by: profile.id
+          title_zh: titleZh, title_en: titleEn, body_zh: bodyZh, body_en: bodyEn, published: true, created_by: profile.id
         });
-        showAlert(officeAlert, error ? error.message : t("最新資訊已發布，首頁會即時更新。", "News published. The homepage updates live."), !error);
-        if (!error) event.currentTarget.reset();
+        if (error) { showAlert(officeAlert, error.message, false); return; }
+        const logged = await recordChange("insert",
+          "新增最新資訊。中文標題「" + titleZh + "」。英文標題「" + titleEn + "」。中文內容「" + bodyZh + "」。英文內容「" + bodyEn + "」。",
+          "Added a news item. Chinese title \"" + titleZh + "\". English title \"" + titleEn + "\". Chinese text \"" + bodyZh + "\". English text \"" + bodyEn + "\".");
+        showAlert(officeAlert, logged ? logged.message : t("最新資訊已發布，首頁會即時更新。", "News published. The homepage updates live."), !logged);
+        event.currentTarget.reset();
       });
       document.getElementById("form-content").addEventListener("submit", async (event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
         const keys = new Set([...data.keys()].map((key) => key.split(":")[0]));
         let failed = "";
+        const notes = [];
         for (const key of keys) {
+          const nextZh = String(data.get(key + ":zh") || "");
+          const nextEn = String(data.get(key + ":en") || "");
+          const zhField = event.currentTarget.querySelector('[name="' + key + ':zh"]');
+          const enField = event.currentTarget.querySelector('[name="' + key + ':en"]');
+          const prevZh = zhField ? zhField.dataset.original || "" : "";
+          const prevEn = enField ? enField.dataset.original || "" : "";
+          if (nextZh === prevZh && nextEn === prevEn) continue;
           const { error } = await client.from("site_content").update({
-            value_zh: String(data.get(key + ":zh") || ""), value_en: String(data.get(key + ":en") || ""), updated_by: profile.id
+            value_zh: nextZh, value_en: nextEn, updated_by: profile.id
           }).eq("key", key);
-          if (error) failed = error.message;
+          if (error) { failed = error.message; continue; }
+          const label = contentPair(key);
+          const zhParts = [];
+          const enParts = [];
+          if (nextZh !== prevZh) {
+            zhParts.push("中文由「" + prevZh + "」改為「" + nextZh + "」");
+            enParts.push("Chinese text changed from \"" + prevZh + "\" to \"" + nextZh + "\"");
+          }
+          if (nextEn !== prevEn) {
+            zhParts.push("英文由「" + prevEn + "」改為「" + nextEn + "」");
+            enParts.push("English text changed from \"" + prevEn + "\" to \"" + nextEn + "\"");
+          }
+          notes.push(["修改全站文字「" + label[0] + "」。" + zhParts.join("。") + "。", "Edited site text \"" + label[1] + "\". " + enParts.join(". ") + "."]);
+          if (zhField) zhField.dataset.original = nextZh;
+          if (enField) enField.dataset.original = nextEn;
         }
-        showAlert(officeAlert, failed || t("全站文字已同步。", "Site text synced."), !failed);
+        let logError = null;
+        for (const note of notes) {
+          logError = await recordChange("update", note[0], note[1]) || logError;
+        }
+        showAlert(officeAlert, failed || (logError ? logError.message : t("全站文字已同步。", "Site text synced.")), !failed && !logError);
       });
       client.auth.onAuthStateChange(async (event, session) => {
         if (event === "PASSWORD_RECOVERY") showView("reset");

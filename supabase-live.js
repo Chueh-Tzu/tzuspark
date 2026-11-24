@@ -21,12 +21,22 @@
     const section = document.getElementById("news");
     if (!list || !section) return;
     const visible = newsRows.filter((row) => row.published);
+    section.hidden = false;
     if (!visible.length) {
-      section.hidden = true;
       list.replaceChildren();
+      const empty = document.createElement("p");
+      empty.className = "news-empty";
+      empty.id = "news-empty";
+      const zh = document.createElement("span");
+      zh.className = "zh";
+      zh.textContent = "目前還沒有最新消息。";
+      const en = document.createElement("span");
+      en.className = "en";
+      en.textContent = "There is no news yet.";
+      empty.append(zh, en);
+      list.append(empty);
       return;
     }
-    section.hidden = false;
     list.replaceChildren();
     visible.forEach((row) => {
       const article = document.createElement("article");

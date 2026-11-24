@@ -182,10 +182,12 @@
     .nav {
       display: flex;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 2px;
+      justify-content: flex-start;
+      flex-wrap: nowrap;
+      gap: 22px;
       flex: 1;
       min-width: 0;
+      padding-left: 72px;
     }
     .nav-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; flex: none; }
     .nav > a, .nav .drop-trigger {
@@ -200,10 +202,22 @@
       border-bottom: 2px solid transparent;
       border-radius: 0;
       background: transparent;
+      background-color: transparent;
+      background-image: none;
+      box-shadow: none;
       appearance: none;
+      -webkit-appearance: none;
       cursor: pointer;
       font-family: inherit;
       white-space: nowrap;
+    }
+    .nav button.drop-trigger {
+      background: var(--wine) !important;
+      background-color: var(--wine) !important;
+      background-image: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      color: rgba(255, 255, 255, 0.84);
     }
     .nav .drop-trigger { gap: 6px; }
     .nav .drop-trigger::after {
@@ -215,10 +229,16 @@
       border-top: 5px solid currentColor;
       opacity: 0.85;
     }
-    .nav .drop:hover .drop-trigger::after,
-    .nav .drop:focus-within .drop-trigger::after,
-    .nav .drop.is-open .drop-trigger::after { transform: rotate(180deg); }
-    .nav > a:hover, .nav .drop-trigger:hover { color: #fff; background: rgba(255, 255, 255, 0.06); }
+    .nav > a:hover { color: #fff; background: transparent; }
+    .nav button.drop-trigger:hover,
+    .nav button.drop-trigger:focus,
+    .nav button.drop-trigger:active {
+      color: #fff;
+      background: var(--wine) !important;
+      background-color: var(--wine) !important;
+      border-radius: 0 !important;
+      outline: none;
+    }
     .nav > a[aria-current="page"], .nav .drop.is-current .drop-trigger {
       color: #fff;
       border-bottom-color: var(--nav-gold);
@@ -227,9 +247,9 @@
     .nav .drop-menu {
       display: none;
       position: absolute;
-      top: calc(100% - 2px);
+      top: calc(100% - 8px);
       left: 0;
-      min-width: 240px;
+      min-width: 220px;
       background: #fff;
       border: 1px solid var(--nav-line);
       border-radius: 12px;
@@ -237,9 +257,12 @@
       padding: 8px;
       z-index: 50;
     }
-    .nav .drop:hover .drop-menu,
-    .nav .drop:focus-within .drop-menu,
+    @media (hover: hover) and (pointer: fine) {
+      .nav .drop:hover .drop-menu { display: grid; }
+      .nav .drop:hover .drop-trigger::after { transform: rotate(180deg); }
+    }
     .nav .drop.is-open .drop-menu { display: grid; }
+    .nav .drop.is-open .drop-trigger::after { transform: rotate(180deg); }
     .nav .drop-menu a {
       padding: 12px 16px;
       border-radius: 8px;
@@ -390,8 +413,11 @@
     .nav-actions .btn { padding: 9px 18px; font-size: 15px; }
     .btn-login { background: #fff; color: var(--wine); }
     .btn-login:hover { background: var(--blush); color: var(--wine); }
-    .news { padding: 12px 0 8px; }
+    .news { background: var(--paper); padding: 78px 0; }
     .news-list { display: grid; gap: 14px; }
+    .news-empty { margin: 0; text-align: center; color: #7a4a52; font-size: 17px; }
+    .esg { background: #FBE6EA; padding: 78px 0; }
+    .offer[id] { scroll-margin-top: calc(var(--header) + 12px); }
     .news-card { background: #fff; border-radius: 18px; padding: 18px 20px; box-shadow: 0 10px 24px rgba(107, 42, 54, 0.08); }
     .news-card h3 { margin: 0 0 6px; color: var(--wine); font-family: Calistoga, serif; font-weight: 400; }
     [data-content] { white-space: pre-line; }
@@ -896,6 +922,7 @@
       .chrome-sticky { display: none; }
       body.nav-open .chrome-sticky { display: block; }
       .nav, .nav-bar-inner { flex-direction: column; align-items: stretch; }
+      .nav { flex-wrap: wrap; padding-left: 0; gap: 0; }
       .nav-actions { margin: 4px 0 12px; padding: 0 8px; }
       .nav .drop-menu { position: static; min-width: 0; box-shadow: none; }
       .hub-grid { grid-template-columns: 1fr 1fr; }
@@ -993,6 +1020,14 @@
           <nav class="nav" id="site-nav" aria-label="Primary">
             <a href="#home" aria-current="page"><span class="zh">首頁</span><span class="en">Home</span></a>
             <div class="drop">
+              <button type="button" class="drop-trigger" aria-haspopup="true" aria-expanded="false"><span class="zh">公司介紹</span><span class="en">Company</span></button>
+              <div class="drop-menu">
+                <a href="#about"><span class="zh">關於我們</span><span class="en">About Us</span></a>
+                <a href="#process"><span class="zh">製造流程</span><span class="en">Manufacturing Process</span></a>
+                <a href="#oem"><span class="zh">代工服務</span><span class="en">OEM Services</span></a>
+              </div>
+            </div>
+            <div class="drop">
               <button type="button" class="drop-trigger" aria-haspopup="true" aria-expanded="false"><span class="zh">產品</span><span class="en">Products</span></button>
               <div class="drop-menu">
                 <a href="#products"><span class="zh">產品介紹</span><span class="en">Our Products</span></a>
@@ -1000,18 +1035,29 @@
               </div>
             </div>
             <div class="drop">
-              <button type="button" class="drop-trigger" aria-haspopup="true" aria-expanded="false"><span class="zh">服務</span><span class="en">Services</span></button>
+              <button type="button" class="drop-trigger" aria-haspopup="true" aria-expanded="false">ESG</button>
               <div class="drop-menu">
-                <a href="#oem"><span class="zh">代工服務</span><span class="en">OEM Services</span></a>
-                <a href="#process"><span class="zh">製造流程</span><span class="en">Manufacturing Process</span></a>
+                <a href="#esg-environment"><span class="zh">環境</span><span class="en">Environment</span></a>
+                <a href="#esg-social"><span class="zh">社會</span><span class="en">Social</span></a>
+                <a href="#esg-governance"><span class="zh">治理</span><span class="en">Governance</span></a>
               </div>
             </div>
-            <a href="#about"><span class="zh">關於我們</span><span class="en">About Us</span></a>
-            <a href="#faq"><span class="zh">常見問題</span><span class="en">FAQ</span></a>
+            <div class="drop">
+              <button type="button" class="drop-trigger" aria-haspopup="true" aria-expanded="false"><span class="zh">新聞</span><span class="en">News</span></button>
+              <div class="drop-menu">
+                <a href="#news"><span class="zh">最新資訊</span><span class="en">Latest</span></a>
+              </div>
+            </div>
+            <div class="drop">
+              <button type="button" class="drop-trigger" aria-haspopup="true" aria-expanded="false"><span class="zh">問與答</span><span class="en">Q&amp;A</span></button>
+              <div class="drop-menu">
+                <a href="#faq"><span class="zh">常見問題</span><span class="en">FAQ</span></a>
+              </div>
+            </div>
+            <a href="#contact"><span class="zh">聯絡我們</span><span class="en">Contact Us</span></a>
           </nav>
           <div class="nav-actions">
             <button type="button" class="lang-toggle" data-locale-toggle aria-label="切換為中文">中文</button>
-            <a class="btn btn-gold" href="#contact"><span class="zh">聯絡我們</span><span class="en">Contact Us</span></a>
             <a class="btn btn-login" id="account-link" href="account.html"><span class="zh">登入/註冊</span><span class="en">Sign in</span></a>
           </div>
         </div>
@@ -1302,12 +1348,38 @@ Connecting Tomorrow.</p>
       </div>
     </section>
 
-    <section class="news" id="news" hidden>
+    <section class="esg" id="esg">
+      <div class="wrap">
+        <div class="center-copy">
+          <h2>ESG</h2>
+          <p><span class="zh">用已經寫在罐子上的做法，說明環境、夥伴與每一批的做法。</span><span class="en">Environment, people, and how each batch is made, using only what the cans already say.</span></p>
+        </div>
+        <div class="oem-grid">
+          <article class="offer" id="esg-environment">
+            <h3><span class="zh">環境</span><span class="en">Environment</span></h3>
+            <p><span class="zh">每一罐是氣泡水、蔗糖、天然香料與檸檬酸，不加人工色素。顏色來自風味本身。</span><span class="en">Every can is carbonated water, cane sugar, natural flavors, and citric acid, with no artificial colors. The color comes from the flavor itself.</span></p>
+          </article>
+          <article class="offer" id="esg-social">
+            <h3><span class="zh">社會</span><span class="en">Social</span></h3>
+            <p><span class="zh">個人品牌也可以先做小批量。寫給 TzuSpark 的每一則留言都會被讀到。</span><span class="en">A personal brand can start with a small run. Every note written to TzuSpark is read.</span></p>
+          </article>
+          <article class="offer" id="esg-governance">
+            <h3><span class="zh">治理</span><span class="en">Governance</span></h3>
+            <p><span class="zh">每一批都走同一條路：採集、調配、起泡、充填、分享。配方與罐上的文字保持一致。</span><span class="en">Every batch follows the same path: gather, blend, sparkle, fill, and share. The recipe and the words on the can stay in step.</span></p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="news" id="news">
       <div class="wrap">
         <div class="center-copy">
           <h2><span class="zh">最新資訊</span><span class="en">Latest</span></h2>
+          <p><span class="zh">品牌的新消息會出現在這裡。</span><span class="en">Brand updates appear here.</span></p>
         </div>
-        <div class="news-list" id="news-list"></div>
+        <div class="news-list" id="news-list">
+          <p class="news-empty" id="news-empty"><span class="zh">目前還沒有最新消息。</span><span class="en">There is no news yet.</span></p>
+        </div>
       </div>
     </section>
 
@@ -1385,13 +1457,12 @@ Connecting Tomorrow.</p>
       <span class="footer-partner"><span class="zh">你可信賴的夥伴</span><span class="en">Your Trusted Partner</span></span>
       <nav class="footer-nav" aria-label="Footer">
         <a href="#home"><span class="zh">首頁</span><span class="en">Home</span></a>
-        <a href="#products"><span class="zh">產品介紹</span><span class="en">Our Products</span></a>
-        <a href="#details"><span class="zh">產品資訊</span><span class="en">Product Details</span></a>
-        <a href="#oem"><span class="zh">代工服務</span><span class="en">OEM Services</span></a>
-        <a href="#process"><span class="zh">製造流程</span><span class="en">Manufacturing Process</span></a>
-        <a href="#about"><span class="zh">關於我們</span><span class="en">About Us</span></a>
+        <a href="#about"><span class="zh">公司介紹</span><span class="en">Company</span></a>
+        <a href="#products"><span class="zh">產品</span><span class="en">Products</span></a>
+        <a href="#esg">ESG</a>
+        <a href="#news"><span class="zh">新聞</span><span class="en">News</span></a>
+        <a href="#faq"><span class="zh">問與答</span><span class="en">Q&amp;A</span></a>
         <a href="#contact"><span class="zh">聯絡我們</span><span class="en">Contact Us</span></a>
-        <a href="#faq"><span class="zh">常見問題</span><span class="en">FAQ</span></a>
       </nav>
       <div class="social">
         <a class="soc" href="#contact" aria-label="Email">
@@ -1473,9 +1544,18 @@ Connecting Tomorrow.</p>
       applyMenuCollapsed(!document.body.classList.contains("menu-collapsed"));
     });
 
-    nav.querySelectorAll(".drop-trigger").forEach((trigger) => {
+    const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    nav.querySelectorAll(".drop").forEach((drop) => {
+      const trigger = drop.querySelector(".drop-trigger");
+      const closeDrop = () => {
+        drop.classList.remove("is-open");
+        trigger.setAttribute("aria-expanded", "false");
+      };
+      if (finePointer) {
+        drop.addEventListener("mouseleave", closeDrop);
+      }
       trigger.addEventListener("click", () => {
-        const drop = trigger.parentElement;
+        if (finePointer) return;
         const open = drop.classList.toggle("is-open");
         trigger.setAttribute("aria-expanded", String(open));
       });
@@ -1486,13 +1566,22 @@ Connecting Tomorrow.</p>
     const searchResults = document.getElementById("search-results");
     const entries = [
       ["首頁", "Home", "#home", "今天創新，明天連結", "Innovating today, connecting tomorrow"],
+      ["公司介紹", "Company", "#about", "TzuSpark 的故事", "The personal story behind TzuSpark"],
+      ["關於我們", "About Us", "#about", "TzuSpark 的故事", "The personal story behind TzuSpark"],
+      ["製造流程", "Manufacturing Process", "#process", "採集、調配、起泡、充填、分享", "Gather, blend, sparkle, fill, share"],
+      ["代工服務", "OEM Services", "#oem", "自有品牌、配方、小批量", "Private label, recipes, small runs"],
+      ["產品", "Products", "#products", "薑汁、蔓越莓薑汁、萊姆、黑櫻桃", "Ginger Ale, Cranberry, Lime, Black Cherry"],
       ["產品介紹", "Our Products", "#products", "薑汁、蔓越莓薑汁、萊姆、黑櫻桃", "Ginger Ale, Cranberry, Lime, Black Cherry"],
       ["產品資訊", "Product Details", "#details", "成分、罐裝規格、風味", "Ingredients, can size, tasting notes"],
-      ["代工服務", "OEM Services", "#oem", "自有品牌、配方、小批量", "Private label, recipes, small runs"],
-      ["製造流程", "Manufacturing Process", "#process", "採集、調配、起泡、充填、分享", "Gather, blend, sparkle, fill, share"],
-      ["關於我們", "About Us", "#about", "TzuSpark 的故事", "The personal story behind TzuSpark"],
-      ["聯絡我們", "Contact Us", "#contact", "寫信給團隊", "Send a note to the team"],
-      ["常見問題", "FAQ", "#faq", "罐裝、成分、合作", "Cans, ingredients, partnerships"]
+      ["ESG", "ESG", "#esg", "環境、社會、治理", "Environment, social, and governance"],
+      ["環境", "Environment", "#esg-environment", "天然原料，無人工色素", "Natural ingredients, no artificial colors"],
+      ["社會", "Social", "#esg-social", "小批量與每一則留言", "Small runs and every note"],
+      ["治理", "Governance", "#esg-governance", "每一批同一條製造流程", "The same path for every batch"],
+      ["新聞", "News", "#news", "最新資訊", "Latest updates"],
+      ["最新資訊", "Latest", "#news", "品牌的新消息", "Brand updates"],
+      ["問與答", "Q&A", "#faq", "罐裝、成分、合作", "Cans, ingredients, partnerships"],
+      ["常見問題", "FAQ", "#faq", "罐裝、成分、合作", "Cans, ingredients, partnerships"],
+      ["聯絡我們", "Contact Us", "#contact", "寫信給團隊", "Send a note to the team"]
     ];
     let activeIndex = -1;
 
@@ -1515,7 +1604,11 @@ Connecting Tomorrow.</p>
       link.addEventListener("click", () => {
         document.body.classList.remove("nav-open");
         toggle.setAttribute("aria-expanded", "false");
-        nav.querySelectorAll(".drop").forEach((drop) => drop.classList.remove("is-open"));
+        nav.querySelectorAll(".drop").forEach((drop) => {
+          drop.classList.remove("is-open");
+          const trigger = drop.querySelector(".drop-trigger");
+          if (trigger) trigger.setAttribute("aria-expanded", "false");
+        });
       });
     });
 

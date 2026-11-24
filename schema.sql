@@ -82,6 +82,22 @@ create index if not exists login_logs_created_idx on public.login_logs (created_
 alter table public.login_logs enable row level security;
 grant insert, select on public.login_logs to authenticated;
 
+create table if not exists public.change_logs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles (id) on delete set null,
+  email text not null default '',
+  display_name text not null default '',
+  role text not null default '',
+  action text not null check (action in ('insert', 'update', 'delete')),
+  item_zh text not null default '',
+  item_en text not null default '',
+  created_at timestamptz not null default now()
+);
+
+create index if not exists change_logs_created_idx on public.change_logs (created_at desc);
+alter table public.change_logs enable row level security;
+grant insert, select on public.change_logs to authenticated;
+
 alter table public.profiles enable row level security;
 alter table public.site_content enable row level security;
 alter table public.news enable row level security;
@@ -166,6 +182,22 @@ create policy "staff reads login logs" on public.login_logs
   for select to authenticated
   using ((select private.tz_role()) in ('admin', 'super_admin'));
 
+drop policy if exists "staff records office changes" on public.change_logs;
+create policy "staff records office changes" on public.change_logs
+  for insert to authenticated
+  with check (
+    user_id = (select auth.uid())
+    and role = (select private.tz_role())
+    and (select private.tz_role()) in ('admin', 'super_admin')
+    and email = (select email from public.profiles where id = (select auth.uid()))
+    and display_name = (select display_name from public.profiles where id = (select auth.uid()))
+  );
+
+drop policy if exists "staff reads office changes" on public.change_logs;
+create policy "staff reads office changes" on public.change_logs
+  for select to authenticated
+  using ((select private.tz_role()) in ('admin', 'super_admin'));
+
 grant select on public.site_content to anon, authenticated;
 grant select on public.news to anon, authenticated;
 grant insert on public.site_events to anon, authenticated;
@@ -183,8 +215,8 @@ create policy "public reads site content" on public.site_content
 drop policy if exists "super admin writes site content" on public.site_content;
 create policy "super admin writes site content" on public.site_content
   for all to authenticated
-  using ((select private.tz_role()) = 'super_admin')
-  with check ((select private.tz_role()) = 'super_admin');
+  using ((select private.tz_role()) in ('admin', 'super_admin'))
+  with check ((select private.tz_role()) in ('admin', 'super_admin'));
 
 drop policy if exists "public reads published news" on public.news;
 create policy "public reads published news" on public.news
@@ -222,13 +254,21 @@ create policy "read own profile" on public.profiles
 drop policy if exists "super admin reads profiles" on public.profiles;
 create policy "super admin reads profiles" on public.profiles
   for select to authenticated
-  using ((select private.tz_role()) = 'super_admin');
+  using ((select private.tz_role()) in ('admin', 'super_admin'));
+
+drop policy if exists "admin reads profiles" on public.profiles;
 
 drop policy if exists "super admin updates profiles" on public.profiles;
 create policy "super admin updates profiles" on public.profiles
   for update to authenticated
   using ((select private.tz_role()) = 'super_admin')
   with check ((select private.tz_role()) = 'super_admin' and role in ('visitor', 'pending', 'rejected', 'admin', 'super_admin'));
+
+drop policy if exists "admin updates other accounts" on public.profiles;
+create policy "admin updates other accounts" on public.profiles
+  for update to authenticated
+  using ((select private.tz_role()) = 'admin' and role <> 'super_admin')
+  with check ((select private.tz_role()) = 'admin' and role in ('visitor', 'pending', 'rejected', 'admin'));
 
 drop policy if exists "members insert own messages" on public.messages;
 create policy "members insert own messages" on public.messages
@@ -243,13 +283,13 @@ create policy "members read own messages" on public.messages
 drop policy if exists "super admin reads messages" on public.messages;
 create policy "super admin reads messages" on public.messages
   for select to authenticated
-  using ((select private.tz_role()) = 'super_admin');
+  using ((select private.tz_role()) in ('admin', 'super_admin'));
 
 drop policy if exists "super admin replies to messages" on public.messages;
 create policy "super admin replies to messages" on public.messages
   for update to authenticated
-  using ((select private.tz_role()) = 'super_admin')
-  with check ((select private.tz_role()) = 'super_admin');
+  using ((select private.tz_role()) in ('admin', 'super_admin'))
+  with check ((select private.tz_role()) in ('admin', 'super_admin'));
 
 drop policy if exists "members read product details" on public.product_details;
 create policy "members read product details" on public.product_details
@@ -319,13 +359,16 @@ declare
   target_role text;
   super_count integer;
 begin
-  if (select private.tz_role()) is distinct from 'super_admin' then
+  if (select private.tz_role()) not in ('admin', 'super_admin') then
     raise exception 'not allowed';
   end if;
   if target = (select auth.uid()) then
     raise exception 'cannot remove the account you are using';
   end if;
   select role into target_role from public.profiles where id = target;
+  if target_role = 'super_admin' and (select private.tz_role()) is distinct from 'super_admin' then
+    raise exception 'cannot change a super admin';
+  end if;
   select count(*) into super_count from public.profiles where role = 'super_admin';
   if target_role = 'super_admin' and super_count <= 1 then
     raise exception 'cannot remove the last super admin';
